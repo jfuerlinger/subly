@@ -30,7 +30,7 @@ const categoryData= computed(() => {
   const map = new Map<string, { total: number; count: number }>()
 
   for (const s of active) {
-    const key = s.category.toLowerCase()
+    const key = s.category.trim().toLowerCase()
     const existing = map.get(key) ?? { total: 0, count: 0 }
     map.set(key, { total: existing.total + toMonthlyAmount(s), count: existing.count + 1 })
   }
