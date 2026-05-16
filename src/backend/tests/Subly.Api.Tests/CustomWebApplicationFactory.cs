@@ -1,32 +1,29 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Subly.Infrastructure.Persistence;
 
 namespace Subly.Api.Tests;
 
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"subly-api-tests-{Guid.NewGuid():N}.db");
+    private readonly string _dbName = $"subly-tests-{Guid.NewGuid():N}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureAppConfiguration((_, config) =>
+        builder.ConfigureServices(services =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            var dbName = _dbName;
+            services.Replace(ServiceDescriptor.Scoped<SublyDbContext>(_ =>
             {
-                ["ConnectionStrings:DefaultConnection"] = $"Data Source={_databasePath}",
-            });
+                var opts = new DbContextOptionsBuilder<SublyDbContext>()
+                    .UseInMemoryDatabase(dbName)
+                    .Options;
+                return new SublyDbContext(opts);
+            }));
         });
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-
-        if (File.Exists(_databasePath))
-        {
-            File.Delete(_databasePath);
-        }
     }
 }

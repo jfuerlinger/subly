@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.Application.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.Api.Tests", "tests\Subly.Api.Tests\Subly.Api.Tests.csproj", "{12C226CC-DE43-4C19-B605-6D3F6CE553C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.ServiceDefaults", "src\Subly.ServiceDefaults\Subly.ServiceDefaults.csproj", "{D0CAAAE2-84BA-469C-B9CA-77447FD95670}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,18 @@ Global
 		{12C226CC-DE43-4C19-B605-6D3F6CE553C4}.Release|x64.Build.0 = Release|Any CPU
 		{12C226CC-DE43-4C19-B605-6D3F6CE553C4}.Release|x86.ActiveCfg = Release|Any CPU
 		{12C226CC-DE43-4C19-B605-6D3F6CE553C4}.Release|x86.Build.0 = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Debug|x86.Build.0 = Debug|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|x64.Build.0 = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +126,6 @@ Global
 		{DAC9A123-33B8-4CCF-903E-4F094A528F5E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{585F2B57-B4F4-4FBC-BE2D-A392ABC962D4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{12C226CC-DE43-4C19-B605-6D3F6CE553C4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{D0CAAAE2-84BA-469C-B9CA-77447FD95670} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

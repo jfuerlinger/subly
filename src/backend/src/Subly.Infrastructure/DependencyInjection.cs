@@ -12,11 +12,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Data Source=subly.db";
+        var connectionString = configuration.GetConnectionString("sublydb")
+            ?? configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("No database connection string configured (expected 'sublydb' or 'DefaultConnection').");
 
         services.AddDbContext<SublyDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseNpgsql(connectionString));
 
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddSingleton<IDateProvider, SystemDateProvider>();
@@ -28,11 +29,24 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SublyDbContext>();
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+
+        if (dbContext.Database.IsRelational())
+            await dbContext.Database.MigrateAsync(cancellationToken);
+        else
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
         if (seed)
         {
             await SublyDataSeeder.SeedAsync(dbContext, cancellationToken);
         }
+    }
+
+    public static async Task ResetDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        using var scope = services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<SublyDbContext>();
+        await dbContext.Database.EnsureDeletedAsync(cancellationToken);
+        await dbContext.Database.MigrateAsync(cancellationToken);
+        await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
     }
 }

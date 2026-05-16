@@ -12,6 +12,11 @@ public static class SublyDataSeeder
             return;
         }
 
+        await ForceSeedAsync(dbContext, cancellationToken);
+    }
+
+    public static async Task ForceSeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
+    {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var data = new[]
         {
