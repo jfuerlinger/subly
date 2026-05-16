@@ -109,7 +109,7 @@ const segments = computed(() => {
             :stroke-dasharray="seg.dasharray"
             :stroke-dashoffset="seg.dashoffset"
             stroke-linecap="butt"
-            transform="rotate(-90 80 80)"
+            :transform="`rotate(-90 ${CENTER} ${CENTER})`"
           />
         </svg>
         <div class="donut-center">
