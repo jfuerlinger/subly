@@ -89,6 +89,25 @@ function positionTooltip(event: MouseEvent) {
   tooltipY.value = event.clientY + offset
 }
 
+function showTooltipOnFocus(category: string, event: FocusEvent) {
+  hoveredCategory.value = category
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const offset = 8
+  const estimatedWidth = 260
+  tooltipX.value =
+    rect.right + estimatedWidth + offset > window.innerWidth
+      ? rect.left - estimatedWidth - offset
+      : rect.right + offset
+  tooltipY.value = rect.top
+}
+
+function legendAriaLabel(cat: { label: string; items: Subscription[]; total: number }): string {
+  const subs = cat.items
+    .map((s) => `${s.name} ${formatCurrency(toMonthlyAmount(s))}/Mo.`)
+    .join(', ')
+  return `${cat.label}: ${subs}. Gesamt: ${formatCurrency(cat.total)}/Mo.`
+}
+
 const totalMonthly = computed(() =>
   categoryData.value.reduce((sum, c) => sum + c.total, 0),
 )
@@ -168,9 +187,13 @@ const segments = computed(() => {
           :key="cat.category"
           class="donut-legend-item"
           :class="{ 'is-hovered': hoveredCategory === cat.category }"
+          tabindex="0"
+          :aria-label="legendAriaLabel(cat)"
           @mouseenter="showTooltip(cat.category, $event)"
           @mouseleave="hideTooltip"
           @mousemove="positionTooltip($event)"
+          @focus="showTooltipOnFocus(cat.category, $event)"
+          @blur="hideTooltip"
         >
           <span class="donut-dot" :style="{ background: cat.color }" />
           <span class="donut-name">
@@ -266,6 +289,11 @@ const segments = computed(() => {
   background: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
   padding-left: 0.3rem;
   padding-right: 0.3rem;
+}
+
+.donut-legend-item:focus {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .donut-legend-item:last-child {
