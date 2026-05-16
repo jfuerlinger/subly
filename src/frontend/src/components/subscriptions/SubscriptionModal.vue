@@ -41,7 +41,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           </header>
 
           <div class="modal-body">
-            <SubscriptionForm @submit="onSubmit" />
+            <SubscriptionForm @submit="onSubmit" @cancel="emit('close')" />
           </div>
         </div>
       </div>
