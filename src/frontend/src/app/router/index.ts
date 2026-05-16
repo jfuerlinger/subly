@@ -44,14 +44,27 @@ router.onError((err, to) => {
     err instanceof TypeError &&
     err.message.includes(dynamicImportFetchError)
   ) {
-    if (window.sessionStorage.getItem(dynamicImportReloadKey) === to.fullPath) {
+    let hasRetried = false
+
+    try {
+      hasRetried = window.sessionStorage.getItem(dynamicImportReloadKey) === to.fullPath
+    } catch {
+      console.warn('[router] sessionStorage is unavailable. Proceeding without retry guard.')
+    }
+
+    if (hasRetried) {
       console.warn(
         `[router] Dynamic import failed again for "${to.fullPath}". Skipping automatic reload to avoid a loop.`,
       )
       return
     }
 
-    window.sessionStorage.setItem(dynamicImportReloadKey, to.fullPath)
+    try {
+      window.sessionStorage.setItem(dynamicImportReloadKey, to.fullPath)
+    } catch {
+      console.warn('[router] Failed to persist retry guard in sessionStorage.')
+    }
+
     window.location.href = to.fullPath
   }
 })
