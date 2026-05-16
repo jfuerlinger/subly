@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.Api.Tests", "tests\Su
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.ServiceDefaults", "src\Subly.ServiceDefaults\Subly.ServiceDefaults.csproj", "{D0CAAAE2-84BA-469C-B9CA-77447FD95670}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subly.AppHost", "src\Subly.AppHost\Subly.AppHost.csproj", "{A6CF4A18-6A8A-4E4A-8E2E-4A5F6D0E9B71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
