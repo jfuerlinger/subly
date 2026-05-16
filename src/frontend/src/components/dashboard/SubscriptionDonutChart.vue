@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Subscription } from '../../app/types/subscription'
 import { formatCurrency } from '../../app/utils/formatting'
 import { toMonthlyAmount } from '../../app/utils/subscriptionMath'
@@ -33,14 +33,18 @@ function categoryColorIndex(category: string): number {
   return hash % FALLBACK_COLORS.length
 }
 
-const categoryData= computed(() => {
+const categoryData = computed(() => {
   const active = props.subscriptions.filter((s) => s.status === 'active')
-  const map = new Map<string, { total: number; count: number }>()
+  const map = new Map<string, { total: number; count: number; items: Subscription[] }>()
 
   for (const s of active) {
     const key = s.category.trim().toLowerCase()
-    const existing = map.get(key) ?? { total: 0, count: 0 }
-    map.set(key, { total: existing.total + toMonthlyAmount(s), count: existing.count + 1 })
+    const existing = map.get(key) ?? { total: 0, count: 0, items: [] }
+    map.set(key, {
+      total: existing.total + toMonthlyAmount(s),
+      count: existing.count + 1,
+      items: [...existing.items, s],
+    })
   }
 
   return Array.from(map.entries())
@@ -49,10 +53,41 @@ const categoryData= computed(() => {
       label: category.charAt(0).toUpperCase() + category.slice(1),
       total: data.total,
       count: data.count,
+      items: data.items,
       color: CATEGORY_COLORS[category] ?? FALLBACK_COLORS[categoryColorIndex(category)],
     }))
     .sort((a, b) => b.total - a.total)
 })
+
+// Tooltip state
+const hoveredCategory = ref<string | null>(null)
+const tooltipX = ref(0)
+const tooltipY = ref(0)
+
+const hoveredData = computed(() =>
+  hoveredCategory.value
+    ? categoryData.value.find((c) => c.category === hoveredCategory.value) ?? null
+    : null,
+)
+
+function showTooltip(category: string, event: MouseEvent) {
+  hoveredCategory.value = category
+  positionTooltip(event)
+}
+
+function hideTooltip() {
+  hoveredCategory.value = null
+}
+
+function positionTooltip(event: MouseEvent) {
+  const offset = 14
+  const estimatedWidth = 260
+  tooltipX.value =
+    event.clientX + estimatedWidth + offset > window.innerWidth
+      ? event.clientX - estimatedWidth - offset
+      : event.clientX + offset
+  tooltipY.value = event.clientY + offset
+}
 
 const totalMonthly = computed(() =>
   categoryData.value.reduce((sum, c) => sum + c.total, 0),
@@ -80,6 +115,7 @@ const segments = computed(() => {
 })
 </script>
 
+
 <template>
   <section class="card">
     <h2>Aufteilung nach Kategorie</h2>
@@ -105,11 +141,19 @@ const segments = computed(() => {
             :r="RADIUS"
             fill="none"
             :stroke="seg.color"
-            :stroke-width="STROKE_WIDTH"
+            :stroke-width="hoveredCategory === seg.category ? STROKE_WIDTH + 5 : STROKE_WIDTH"
             :stroke-dasharray="seg.dasharray"
             :stroke-dashoffset="seg.dashoffset"
             stroke-linecap="butt"
             :transform="`rotate(-90 ${CENTER} ${CENTER})`"
+            :style="{
+              opacity: hoveredCategory && hoveredCategory !== seg.category ? 0.4 : 1,
+              transition: 'opacity 0.15s ease, stroke-width 0.15s ease',
+              cursor: 'pointer',
+            }"
+            @mouseenter="showTooltip(seg.category, $event)"
+            @mouseleave="hideTooltip"
+            @mousemove="positionTooltip($event)"
           />
         </svg>
         <div class="donut-center">
@@ -119,7 +163,15 @@ const segments = computed(() => {
       </div>
 
       <ul class="donut-legend">
-        <li v-for="cat in categoryData" :key="cat.category" class="donut-legend-item">
+        <li
+          v-for="cat in categoryData"
+          :key="cat.category"
+          class="donut-legend-item"
+          :class="{ 'is-hovered': hoveredCategory === cat.category }"
+          @mouseenter="showTooltip(cat.category, $event)"
+          @mouseleave="hideTooltip"
+          @mousemove="positionTooltip($event)"
+        >
           <span class="donut-dot" :style="{ background: cat.color }" />
           <span class="donut-name">
             {{ cat.label }}
@@ -130,6 +182,28 @@ const segments = computed(() => {
       </ul>
     </div>
   </section>
+
+  <Teleport to="body">
+    <div
+      v-if="hoveredData"
+      class="donut-tooltip"
+      :style="{ left: `${tooltipX}px`, top: `${tooltipY}px` }"
+    >
+      <div class="donut-tooltip-header">
+        <span class="donut-tooltip-dot" :style="{ background: hoveredData.color }" />
+        <strong>{{ hoveredData.label }}</strong>
+      </div>
+      <ul class="donut-tooltip-list">
+        <li v-for="sub in hoveredData.items" :key="sub.id">
+          <span class="donut-tooltip-sub-name">{{ sub.name }}</span>
+          <span class="donut-tooltip-sub-price">{{ formatCurrency(toMonthlyAmount(sub)) }}/Mo.</span>
+        </li>
+      </ul>
+      <div class="donut-tooltip-total">
+        Gesamt: {{ formatCurrency(hoveredData.total) }}/Mo.
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -183,6 +257,15 @@ const segments = computed(() => {
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--color-border-light);
   font-size: 0.875rem;
+  cursor: default;
+  border-radius: 4px;
+  transition: background 0.12s ease;
+}
+
+.donut-legend-item.is-hovered {
+  background: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
 }
 
 .donut-legend-item:last-child {
@@ -210,5 +293,71 @@ const segments = computed(() => {
   font-weight: 600;
   color: var(--color-text);
   text-align: right;
+}
+
+/* Floating tooltip */
+.donut-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  min-width: 180px;
+  max-width: 260px;
+}
+
+.donut-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.donut-tooltip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.donut-tooltip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.donut-tooltip-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+}
+
+.donut-tooltip-sub-name {
+  color: var(--color-text-muted, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donut-tooltip-sub-price {
+  color: var(--color-text, #111827);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.donut-tooltip-total {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+  color: var(--color-text);
 }
 </style>
