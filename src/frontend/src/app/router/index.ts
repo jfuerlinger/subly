@@ -15,6 +15,11 @@ const routes = [
     name: 'subscriptions',
     component: () => import('../../views/SubscriptionsView.vue'),
   },
+  {
+    path: '/analytics',
+    name: 'analytics',
+    component: () => import('../../views/AnalyticsView.vue'),
+  },
 ]
 
 export const router = createRouter({
