@@ -6,7 +6,12 @@ import { useThemeStore } from '../app/stores/themeStore'
 describe('themeStore', () => {
   let localStorageMock: Record<string, string>
   let mediaQueryListeners: Array<(event: MediaQueryListEvent) => void>
-  let mockMediaQuery: { matches: boolean; media: string; addEventListener: any; removeEventListener: any }
+  let mockMediaQuery: {
+    matches: boolean
+    media: string
+    addEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => void
+    removeEventListener: (type: string, listener: (event: MediaQueryListEvent) => void) => void
+  }
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -116,7 +121,7 @@ describe('themeStore', () => {
 
     // Simulate system preference change to dark
     mockMediaQuery.matches = true
-    const event = new Event('change') as MediaQueryListEvent
+    const event = { matches: true, media: '(prefers-color-scheme: dark)' } as MediaQueryListEvent
     mediaQueryListeners.forEach((listener) => listener(event))
 
     expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
@@ -133,7 +138,7 @@ describe('themeStore', () => {
 
     // Simulate system preference change
     mockMediaQuery.matches = true
-    const event = new Event('change') as MediaQueryListEvent
+    const event = { matches: true, media: '(prefers-color-scheme: dark)' } as MediaQueryListEvent
     mediaQueryListeners.forEach((listener) => listener(event))
 
     // Should not apply theme again since mode is 'light', not 'system'
