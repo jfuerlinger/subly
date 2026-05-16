@@ -12,9 +12,11 @@ const categories = ref<CategoryDto[]>([])
 const showNewCategoryInput = ref(false)
 const newCategoryName = ref('')
 const newCategoryError = ref('')
+const previousCategory = ref('')
 
 onMounted(async () => {
-  categories.value = await fetchCategories()
+  const fetched = await fetchCategories()
+  categories.value = fetched.sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const form = reactive<NewSubscriptionRequest>({
@@ -30,6 +32,7 @@ const form = reactive<NewSubscriptionRequest>({
 function onCategoryChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   if (value === '__new__') {
+    previousCategory.value = form.category
     showNewCategoryInput.value = true
     form.category = ''
   } else {
@@ -62,9 +65,7 @@ function cancelNewCategory() {
   showNewCategoryInput.value = false
   newCategoryName.value = ''
   newCategoryError.value = ''
-  if (!form.category) {
-    form.category = categories.value[0]?.name ?? ''
-  }
+  form.category = previousCategory.value
 }
 
 function onSubmit() {
