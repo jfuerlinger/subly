@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { Subscription } from '../../app/types/subscription'
 import { formatCurrency } from '../../app/utils/formatting'
+import { toMonthlyAmount } from '../../app/utils/subscriptionMath'
 
 const props = defineProps<{
   subscriptions: Subscription[]
@@ -24,11 +25,7 @@ const FALLBACK_COLORS = [
   '#eab308', '#ef4444', '#a855f7', '#0ea5e9', '#6366f1',
 ]
 
-function toMonthlyAmount(subscription: Subscription): number {
-  return subscription.cycle === 'yearly' ? subscription.price / 12 : subscription.price
-}
-
-const categoryData = computed(() => {
+const categoryData= computed(() => {
   const active = props.subscriptions.filter((s) => s.status === 'active')
   const map = new Map<string, { total: number; count: number }>()
 
