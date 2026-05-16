@@ -26,3 +26,17 @@ export const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
+// In dev mode, Vite can trigger a full page reload when it detects new
+// dependencies during a session (e.g. after adding a new source file that
+// introduces a new import chain). This causes any in-flight dynamic import
+// to fail with "Failed to fetch dynamically imported module". Reloading the
+// page after such a failure picks up the freshly optimised bundle.
+router.onError((err, to) => {
+  if (
+    err instanceof TypeError &&
+    err.message.includes('Failed to fetch dynamically imported module')
+  ) {
+    window.location.href = to.fullPath
+  }
+})
