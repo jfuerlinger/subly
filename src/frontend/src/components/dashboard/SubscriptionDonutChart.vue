@@ -82,11 +82,15 @@ function hideTooltip() {
 function positionTooltip(event: MouseEvent) {
   const offset = 14
   const estimatedWidth = 260
-  tooltipX.value =
+  const estimatedHeight = 200
+
+  const rawX =
     event.clientX + estimatedWidth + offset > window.innerWidth
       ? event.clientX - estimatedWidth - offset
       : event.clientX + offset
-  tooltipY.value = event.clientY + offset
+
+  tooltipX.value = Math.max(4, Math.min(rawX, window.innerWidth - estimatedWidth - 4))
+  tooltipY.value = Math.max(4, Math.min(event.clientY + offset, window.innerHeight - estimatedHeight - 4))
 }
 
 function showTooltipOnFocus(category: string, event: FocusEvent) {
