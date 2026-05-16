@@ -1,0 +1,11 @@
+@Subly.Api_HostAddress = http://localhost:5067
+
+GET {{Subly.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{Subly.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,88 @@
+namespace Subly.Domain.Models;
+
+public sealed class Subscription
+{
+    private Subscription()
+    {
+    }
+
+    public Guid Id { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public string Vendor { get; private set; } = string.Empty;
+
+    public string Category { get; private set; } = string.Empty;
+
+    public decimal Price { get; private set; }
+
+    public BillingCycle Cycle { get; private set; }
+
+    public DateOnly NextPaymentDate { get; private set; }
+
+    public string PaymentMethod { get; private set; } = string.Empty;
+
+    public SubscriptionStatus Status { get; private set; }
+
+    public bool AutoRenew { get; private set; }
+
+    public DateOnly StartedAt { get; private set; }
+
+    public static Subscription Create(
+        string name,
+        string vendor,
+        string category,
+        decimal price,
+        BillingCycle cycle,
+        DateOnly nextPaymentDate,
+        string paymentMethod,
+        DateOnly startedAt,
+        SubscriptionStatus status = SubscriptionStatus.Active,
+        bool autoRenew = true)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        if (string.IsNullOrWhiteSpace(vendor))
+        {
+            throw new ArgumentException("Vendor is required.", nameof(vendor));
+        }
+
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            throw new ArgumentException("Category is required.", nameof(category));
+        }
+
+        if (price <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(price), "Price must be greater than zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            throw new ArgumentException("Payment method is required.", nameof(paymentMethod));
+        }
+
+        return new Subscription
+        {
+            Id = Guid.NewGuid(),
+            Name = name.Trim(),
+            Vendor = vendor.Trim(),
+            Category = category.Trim(),
+            Price = price,
+            Cycle = cycle,
+            NextPaymentDate = nextPaymentDate,
+            PaymentMethod = paymentMethod.Trim(),
+            StartedAt = startedAt,
+            Status = status,
+            AutoRenew = autoRenew,
+        };
+    }
+
+    public void UpdateStatus(SubscriptionStatus status)
+    {
+        Status = status;
+    }
+}
