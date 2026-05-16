@@ -8,6 +8,8 @@ namespace Subly.Application.Tests;
 
 public sealed class SubscriptionServiceTests
 {
+    private static readonly string[] DefaultCategories = ["streaming", "software", "insurance", "telecom", "energy", "fitness", "news", "cloud", "membership"];
+
     [Fact]
     public async Task GetDashboardSummaryAsync_ShouldCalculateAggregates()
     {
@@ -18,7 +20,7 @@ public sealed class SubscriptionServiceTests
             Subscription.Create("Prime", "Amazon", "streaming", 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
             Subscription.Create("Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), SubscriptionStatus.Paused),
         ]);
-        var service = new SubscriptionService(repository, new FixedDateProvider(now));
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
 
         var summary = await service.GetDashboardSummaryAsync();
 
@@ -34,7 +36,7 @@ public sealed class SubscriptionServiceTests
     {
         var now = new DateOnly(2026, 5, 16);
         var repository = new InMemorySubscriptionRepository();
-        var service = new SubscriptionService(repository, new FixedDateProvider(now));
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
         var request = new CreateSubscriptionRequest(
             Name: "ChatGPT Plus",
             Vendor: "OpenAI",
@@ -57,7 +59,7 @@ public sealed class SubscriptionServiceTests
     public async Task UpdateStatusAsync_ShouldReturnNull_WhenSubscriptionDoesNotExist()
     {
         var repository = new InMemorySubscriptionRepository();
-        var service = new SubscriptionService(repository, new FixedDateProvider(new DateOnly(2026, 5, 16)));
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
         var result = await service.UpdateStatusAsync(Guid.NewGuid(), SubscriptionStatus.Cancelled);
 
@@ -69,7 +71,7 @@ public sealed class SubscriptionServiceTests
     {
         var existing = Subscription.Create("Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));
         var repository = new InMemorySubscriptionRepository([existing]);
-        var service = new SubscriptionService(repository, new FixedDateProvider(new DateOnly(2026, 5, 16)));
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
         var deleted = await service.DeleteSubscriptionAsync(existing.Id);
         var afterDelete = await repository.GetByIdAsync(existing.Id);
@@ -87,7 +89,7 @@ public sealed class SubscriptionServiceTests
             Subscription.Create("Zeta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
             Subscription.Create("Alpha", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
         ]);
-        var service = new SubscriptionService(repository, new FixedDateProvider(now));
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
 
         var result = await service.GetSubscriptionsAsync();
 
@@ -123,6 +125,32 @@ public sealed class SubscriptionServiceTests
         public Task<IReadOnlyList<Subscription>> ListAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<Subscription>>(_items);
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class InMemoryCategoryRepository(IEnumerable<string>? seedNames = null) : ICategoryRepository
+    {
+        private readonly List<Category> _items = seedNames?.Select(Category.Create).ToList() ?? [];
+
+        public Task<IReadOnlyList<Category>> ListAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<Category>>(_items);
+        }
+
+        public Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_items.SingleOrDefault(c => c.Name == name));
+        }
+
+        public Task AddAsync(Category category, CancellationToken cancellationToken = default)
+        {
+            _items.Add(category);
+            return Task.CompletedTask;
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)

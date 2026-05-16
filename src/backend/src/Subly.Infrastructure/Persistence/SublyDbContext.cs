@@ -6,6 +6,7 @@ namespace Subly.Infrastructure.Persistence;
 public sealed class SublyDbContext(DbContextOptions<SublyDbContext> options) : DbContext(options)
 {
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<Category> Categories => Set<Category>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
