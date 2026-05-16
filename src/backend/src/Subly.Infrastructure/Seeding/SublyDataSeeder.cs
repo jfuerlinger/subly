@@ -5,8 +5,23 @@ namespace Subly.Infrastructure.Seeding;
 
 public static class SublyDataSeeder
 {
+    private static readonly string[] DefaultCategories =
+    [
+        "streaming",
+        "software",
+        "insurance",
+        "telecom",
+        "energy",
+        "fitness",
+        "news",
+        "cloud",
+        "membership",
+    ];
+
     public static async Task SeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        await SeedCategoriesAsync(dbContext, cancellationToken);
+
         if (dbContext.Subscriptions.Any())
         {
             return;
@@ -17,6 +32,8 @@ public static class SublyDataSeeder
 
     public static async Task ForceSeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        await SeedCategoriesAsync(dbContext, cancellationToken);
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var data = new[]
         {
@@ -28,6 +45,19 @@ public static class SublyDataSeeder
         };
 
         await dbContext.Subscriptions.AddRangeAsync(data, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedCategoriesAsync(SublyDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var existingNames = dbContext.Categories.Select(c => c.Name).ToHashSet();
+        var missing = DefaultCategories.Where(name => !existingNames.Contains(name)).ToArray();
+
+        if (missing.Length == 0)
+            return;
+
+        var categories = missing.Select(Category.Create).ToArray();
+        await dbContext.Categories.AddRangeAsync(categories, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

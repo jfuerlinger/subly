@@ -20,6 +20,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
+        services.AddScoped<ICategoryRepository, EfCategoryRepository>();
         services.AddSingleton<IDateProvider, SystemDateProvider>();
 
         return services;

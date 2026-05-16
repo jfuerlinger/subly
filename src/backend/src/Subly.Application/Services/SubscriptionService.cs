@@ -4,20 +4,11 @@ using Subly.Domain.Models;
 
 namespace Subly.Application.Services;
 
-public sealed class SubscriptionService(ISubscriptionRepository repository, IDateProvider dateProvider) : ISubscriptionService
+public sealed class SubscriptionService(
+    ISubscriptionRepository repository,
+    ICategoryRepository categoryRepository,
+    IDateProvider dateProvider) : ISubscriptionService
 {
-    private static readonly HashSet<string> KnownCategories =
-    [
-        "streaming",
-        "software",
-        "insurance",
-        "telecom",
-        "energy",
-        "fitness",
-        "news",
-        "cloud",
-        "membership",
-    ];
 
     public async Task<IReadOnlyList<SubscriptionDto>> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
@@ -36,7 +27,7 @@ public sealed class SubscriptionService(ISubscriptionRepository repository, IDat
 
     public async Task<SubscriptionDto> CreateSubscriptionAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        ValidateRequest(request);
+        await ValidateRequestAsync(request, cancellationToken);
 
         var subscription = Subscription.Create(
             request.Name,
@@ -125,7 +116,7 @@ public sealed class SubscriptionService(ISubscriptionRepository repository, IDat
             subscription.StartedAt);
     }
 
-    private static void ValidateRequest(CreateSubscriptionRequest request)
+    private async Task ValidateRequestAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken)
     {
         if (request.Price <= 0m)
         {
@@ -137,7 +128,8 @@ public sealed class SubscriptionService(ISubscriptionRepository repository, IDat
             throw new ArgumentException("Category is required.", nameof(request.Category));
         }
 
-        if (!KnownCategories.Contains(request.Category.ToLowerInvariant()))
+        var category = await categoryRepository.GetByNameAsync(request.Category.ToLowerInvariant(), cancellationToken);
+        if (category is null)
         {
             throw new ArgumentException($"Unknown category '{request.Category}'.", nameof(request.Category));
         }
