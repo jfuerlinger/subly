@@ -25,6 +25,14 @@ const FALLBACK_COLORS = [
   '#eab308', '#ef4444', '#a855f7', '#0ea5e9', '#6366f1',
 ]
 
+function categoryColorIndex(category: string): number {
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    hash = (hash * 31 + category.charCodeAt(i)) >>> 0
+  }
+  return hash % FALLBACK_COLORS.length
+}
+
 const categoryData= computed(() => {
   const active = props.subscriptions.filter((s) => s.status === 'active')
   const map = new Map<string, { total: number; count: number }>()
@@ -36,12 +44,12 @@ const categoryData= computed(() => {
   }
 
   return Array.from(map.entries())
-    .map(([category, data], index) => ({
+    .map(([category, data]) => ({
       category,
       label: category.charAt(0).toUpperCase() + category.slice(1),
       total: data.total,
       count: data.count,
-      color: CATEGORY_COLORS[category] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+      color: CATEGORY_COLORS[category] ?? FALLBACK_COLORS[categoryColorIndex(category)],
     }))
     .sort((a, b) => b.total - a.total)
 })
