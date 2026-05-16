@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import type { NewSubscriptionRequest, SubscriptionStatus } from '../app/types/subscription'
+import { onMounted, ref } from 'vue'
+import type { SubscriptionStatus } from '../app/types/subscription'
 import { useSubscriptionStore } from '../app/stores/subscriptionStore'
-import SubscriptionForm from '../components/subscriptions/SubscriptionForm.vue'
+import SubscriptionModal from '../components/subscriptions/SubscriptionModal.vue'
 import SubscriptionTable from '../components/subscriptions/SubscriptionTable.vue'
 
 const store = useSubscriptionStore()
-
-async function createSubscription(request: NewSubscriptionRequest) {
-  await store.create(request)
-}
+const showModal = ref(false)
 
 async function updateStatus(id: string, status: SubscriptionStatus) {
   await store.updateStatus(id, status)
@@ -31,12 +28,15 @@ onMounted(async () => {
     <header class="view-header">
       <h1>Alle Abos</h1>
       <p v-if="store.error" class="error">{{ store.error }}</p>
+      <div class="view-header-actions">
+        <button class="btn-primary" @click="showModal = true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Hinzufügen
+        </button>
+      </div>
     </header>
-
-    <section class="card">
-      <h2>Neues Abo</h2>
-      <SubscriptionForm @submit="createSubscription" />
-    </section>
 
     <section class="card">
       <h2>Abos</h2>
@@ -47,4 +47,10 @@ onMounted(async () => {
       />
     </section>
   </section>
+
+  <SubscriptionModal
+    :show="showModal"
+    @close="showModal = false"
+    @submit="(req) => store.create(req)"
+  />
 </template>
