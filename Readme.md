@@ -9,6 +9,7 @@ Die App bietet ein Dashboard mit Kennzahlen (monatlich/jährlich/anstehende Zahl
 - **Backend:** ASP.NET Core 9, Clean-Architecture-ähnliche Schichten (Api/Application/Domain/Infrastructure)
 - **Datenbank:** PostgreSQL mit Entity Framework Core (Npgsql)
 - **Orchestrierung (lokal):** .NET Aspire AppHost
+- **CI/CD:** GitHub Actions → DockerHub
 
 ## Architektur
 
@@ -85,6 +86,9 @@ src/
 └─ frontend/
    ├─ src/                      # Vue App
    └─ Dockerfile
+.github/
+└─ workflows/
+   └─ docker-publish.yml        # CI/CD: Build & Push zu DockerHub
 ```
 
 ## Projekt starten
@@ -130,6 +134,54 @@ Stoppen:
 
 ```powershell
 docker compose down
+```
+
+---
+
+### Option 3: Deployment mit DockerHub-Images
+
+Diese Variante zieht fertig gebaute Images direkt von DockerHub und startet die Container — kein lokaler Build-Schritt nötig. Ideal für Produktions- oder Staging-Deployments.
+
+#### CI/CD-Pipeline einrichten
+
+Der GitHub Actions Workflow (`.github/workflows/docker-publish.yml`) baut bei jedem Push auf `master` (oder einem Version-Tag wie `v1.2.3`) automatisch beide Images und pusht sie zu DockerHub.
+
+Dazu müssen in den **GitHub Repository Secrets** folgende Werte hinterlegt sein:
+
+| Secret | Beschreibung |
+|---|---|
+| `DOCKERHUB_USERNAME` | Dein DockerHub-Benutzername |
+| `DOCKERHUB_TOKEN` | DockerHub Access Token (unter *Account Settings → Security*) |
+
+Die veröffentlichten Images heißen:
+- `<DOCKERHUB_USERNAME>/subly-api`
+- `<DOCKERHUB_USERNAME>/subly-frontend`
+
+Tags: `latest` (master), semantische Version (z. B. `1.2.3`, `1.2`), und Git-SHA (`sha-abc1234`).
+
+#### Deployment starten
+
+1. Konfigurationsdatei anlegen:
+
+   ```powershell
+   cd .\src
+   Copy-Item .env.deploy.example .env.deploy
+   # .env.deploy öffnen und DOCKERHUB_USERNAME, POSTGRES_PASSWORD etc. befüllen
+   ```
+
+2. Container starten:
+
+   ```powershell
+   cd .\src
+   docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d
+   ```
+
+Danach ist das Frontend unter `http://localhost:4173` erreichbar.
+
+Stoppen:
+
+```powershell
+docker compose -f docker-compose.deploy.yml --env-file .env.deploy down
 ```
 
 ## Nützliche Kommandos

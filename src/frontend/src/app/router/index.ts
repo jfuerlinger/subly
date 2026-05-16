@@ -20,6 +20,11 @@ const routes = [
     name: 'analytics',
     component: () => import('../../views/AnalyticsView.vue'),
   },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../../views/ProfileSettingsView.vue'),
+  },
 ]
 
 export const router = createRouter({

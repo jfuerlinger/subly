@@ -106,7 +106,7 @@ const systemNav: NavItem[] = [
       </div>
 
       <!-- User -->
-      <div class="sidebar-user">
+      <RouterLink to="/profile" class="sidebar-user" active-class="sidebar-user--active">
         <div class="sidebar-user-avatar">MW</div>
         <div class="sidebar-user-info">
           <div class="sidebar-user-name">Maximilian W.</div>
@@ -115,7 +115,7 @@ const systemNav: NavItem[] = [
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
-      </div>
+      </RouterLink>
     </aside>
 
     <main class="content">
