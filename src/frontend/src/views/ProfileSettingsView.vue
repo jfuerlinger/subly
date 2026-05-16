@@ -32,6 +32,7 @@ const themeOptions: ThemeOption[] = [
           :key="option.value"
           class="theme-option"
           :class="{ 'theme-option--active': themeStore.theme === option.value }"
+          :aria-pressed="themeStore.theme === option.value"
           @click="themeStore.setTheme(option.value)"
         >
           <!-- Sun icon -->
