@@ -153,7 +153,7 @@ const segments = computed(() => {
             :cy="CENTER"
             :r="RADIUS"
             fill="none"
-            stroke="#f3f4f6"
+            stroke="var(--color-border-light)"
             :stroke-width="STROKE_WIDTH"
           />
           <circle

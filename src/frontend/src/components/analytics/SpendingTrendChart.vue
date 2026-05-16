@@ -86,11 +86,11 @@ function updateTooltip(e: MouseEvent) {
         <line
           :x1="PAD_LEFT" :y1="line.y"
           :x2="PAD_LEFT + PLOT_W" :y2="line.y"
-          stroke="#f3f4f6" stroke-width="1"
+          stroke="var(--color-border-light)" stroke-width="1"
         />
         <text
           :x="PAD_LEFT - 5" :y="line.y + 4"
-          text-anchor="end" font-size="9" fill="#9ca3af"
+          text-anchor="end" font-size="9" fill="var(--color-text-muted)"
         >{{ formatShort(line.value) }}</text>
       </g>
 
@@ -98,7 +98,7 @@ function updateTooltip(e: MouseEvent) {
       <line
         :x1="PAD_LEFT" :y1="BOTTOM_Y"
         :x2="PAD_LEFT + PLOT_W" :y2="BOTTOM_Y"
-        stroke="#e5e7eb" stroke-width="1"
+        stroke="var(--color-border)" stroke-width="1"
       />
 
       <!-- Bars with transparent hover zones -->
@@ -132,7 +132,7 @@ function updateTooltip(e: MouseEvent) {
         v-for="bar in bars"
         :key="`lbl-${bar.monthKey}`"
         :x="bar.cx" :y="BOTTOM_Y + 16"
-        text-anchor="middle" font-size="10" fill="#9ca3af"
+        text-anchor="middle" font-size="10" fill="var(--color-text-muted)"
       >{{ bar.label }}</text>
     </svg>
 
