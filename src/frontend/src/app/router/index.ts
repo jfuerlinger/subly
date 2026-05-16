@@ -45,16 +45,13 @@ router.onError((err, to) => {
     err.message.includes(dynamicImportFetchError)
   ) {
     if (window.sessionStorage.getItem(dynamicImportReloadKey) === to.fullPath) {
+      console.warn(
+        `[router] Dynamic import failed again for "${to.fullPath}". Skipping automatic reload to avoid a loop.`,
+      )
       return
     }
 
     window.sessionStorage.setItem(dynamicImportReloadKey, to.fullPath)
     window.location.href = to.fullPath
-  }
-})
-
-router.afterEach(() => {
-  if (import.meta.env.DEV) {
-    window.sessionStorage.removeItem(dynamicImportReloadKey)
   }
 })
