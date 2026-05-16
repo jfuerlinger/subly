@@ -28,7 +28,7 @@ export const router = createRouter({
 })
 
 const dynamicImportFetchError = 'Failed to fetch dynamically imported module'
-const dynamicImportReloadKey = 'subly:dynamic-import-reload'
+const dynamicImportReloadKey = 'subly:dynamic-import-reloads'
 
 // In dev mode, Vite can trigger a full page reload when it detects new
 // dependencies during a session (e.g. after adding a new source file that
@@ -44,25 +44,39 @@ router.onError((err, to) => {
     err instanceof TypeError &&
     err.message.includes(dynamicImportFetchError)
   ) {
-    let hasRetried = false
+    const retriedPaths = new Set<string>()
 
     try {
-      hasRetried = window.sessionStorage.getItem(dynamicImportReloadKey) === to.fullPath
+      const storedPaths = JSON.parse(window.sessionStorage.getItem(dynamicImportReloadKey) ?? '[]')
+
+      if (Array.isArray(storedPaths)) {
+        storedPaths.forEach((path) => {
+          if (typeof path === 'string') {
+            retriedPaths.add(path)
+          }
+        })
+      }
     } catch {
-      console.warn('[router] sessionStorage is unavailable. Proceeding without retry guard.')
+      console.warn(
+        '[router] sessionStorage is unavailable. Automatic reload will proceed without loop protection.',
+      )
     }
 
-    if (hasRetried) {
+    if (retriedPaths.has(to.fullPath)) {
       console.warn(
         `[router] Dynamic import failed again for "${to.fullPath}". Skipping automatic reload to avoid a loop.`,
       )
       return
     }
 
+    retriedPaths.add(to.fullPath)
+
     try {
-      window.sessionStorage.setItem(dynamicImportReloadKey, to.fullPath)
+      window.sessionStorage.setItem(dynamicImportReloadKey, JSON.stringify([...retriedPaths]))
     } catch {
-      console.warn('[router] Failed to persist retry guard in sessionStorage.')
+      console.warn(
+        '[router] Failed to persist retry guard. Multiple reload attempts may occur for this route.',
+      )
     }
 
     window.location.href = to.fullPath
