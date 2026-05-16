@@ -9,14 +9,17 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+function getStoredThemeMode(value: string | null): ThemeMode {
+  return value === 'light' || value === 'dark' || value === 'system' ? value : 'system'
+}
+
 function applyTheme(mode: ThemeMode) {
   const resolved = mode === 'system' ? getSystemTheme() : mode
   document.documentElement.setAttribute('data-theme', resolved)
 }
 
 export const useThemeStore = defineStore('theme', () => {
-  const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null
-  const theme = ref<ThemeMode>(saved ?? 'system')
+  const theme = ref<ThemeMode>(getStoredThemeMode(localStorage.getItem(STORAGE_KEY)))
 
   applyTheme(theme.value)
 
