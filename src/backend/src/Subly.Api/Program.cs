@@ -5,6 +5,8 @@ using Subly.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -13,7 +15,6 @@ builder.Services
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
@@ -25,7 +26,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     app.UseSwaggerUI();
 }
 
-await app.Services.EnsureDatabaseInitializedAsync(seed: true);
+if (args.Contains("--reset-db", StringComparer.OrdinalIgnoreCase))
+{
+    await app.Services.ResetDatabaseAsync();
+    return;
+}
 
 if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
 {
@@ -33,9 +38,10 @@ if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
     return;
 }
 
-app.UseAuthorization();
+await app.Services.EnsureDatabaseInitializedAsync(seed: true);
 
-app.MapHealthChecks("/health");
+app.MapDefaultEndpoints();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
