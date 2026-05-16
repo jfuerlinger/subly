@@ -85,18 +85,18 @@ function onSubmit() {
   <form class="sub-form" @submit.prevent="onSubmit">
     <div class="form-row">
       <div class="field">
-        <label class="field-label">Name</label>
-        <input v-model="form.name" type="text" placeholder="z.B. Netflix" required>
+        <label class="field-label" for="field-name">Name</label>
+        <input id="field-name" v-model="form.name" type="text" placeholder="z.B. Netflix" required>
       </div>
       <div class="field">
-        <label class="field-label">Anbieter</label>
-        <input v-model="form.vendor" type="text" placeholder="z.B. Netflix Inc." required>
+        <label class="field-label" for="field-vendor">Anbieter</label>
+        <input id="field-vendor" v-model="form.vendor" type="text" placeholder="z.B. Netflix Inc." required>
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label">Kategorie</label>
-      <select :value="showNewCategoryInput ? '__new__' : form.category" @change="onCategoryChange" required>
+      <label class="field-label" for="field-category">Kategorie</label>
+      <select id="field-category" :value="showNewCategoryInput ? '__new__' : form.category" @change="onCategoryChange" required>
         <option value="" disabled>Kategorie wählen</option>
         <option v-for="cat in categories" :key="cat.id" :value="cat.name">
           {{ cat.name }}
@@ -113,9 +113,11 @@ function onSubmit() {
         </p>
         <div class="new-category-row">
           <input
+            id="field-new-category"
             v-model="newCategoryName"
             type="text"
             placeholder="Kategoriename"
+            aria-label="Neuer Kategoriename"
             autofocus
             @keydown.enter.prevent="onAddCategory"
           >
@@ -128,12 +130,12 @@ function onSubmit() {
 
     <div class="form-row">
       <div class="field">
-        <label class="field-label">Preis</label>
-        <input v-model.number="form.price" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+        <label class="field-label" for="field-price">Preis</label>
+        <input id="field-price" v-model.number="form.price" type="number" min="0.01" step="0.01" placeholder="0,00" required>
       </div>
       <div class="field">
-        <label class="field-label">Abrechnungszyklus</label>
-        <select v-model="form.cycle">
+        <label class="field-label" for="field-cycle">Abrechnungszyklus</label>
+        <select id="field-cycle" v-model="form.cycle">
           <option value="monthly">Monatlich</option>
           <option value="yearly">Jährlich</option>
         </select>
@@ -142,12 +144,12 @@ function onSubmit() {
 
     <div class="form-row">
       <div class="field">
-        <label class="field-label">Nächste Zahlung</label>
-        <input v-model="form.nextPaymentDate" type="date" required>
+        <label class="field-label" for="field-next-payment">Nächste Zahlung</label>
+        <input id="field-next-payment" v-model="form.nextPaymentDate" type="date" required>
       </div>
       <div class="field">
-        <label class="field-label">Zahlungsmethode</label>
-        <input v-model="form.paymentMethod" type="text" placeholder="z.B. Visa" required>
+        <label class="field-label" for="field-payment-method">Zahlungsmethode</label>
+        <input id="field-payment-method" v-model="form.paymentMethod" type="text" placeholder="z.B. Visa" required>
       </div>
     </div>
 
