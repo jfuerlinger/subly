@@ -149,17 +149,17 @@ dotnet run --project src/Subly.Cli -- subscription-delete 550e8400-e29b-41d4-a71
 
 ### Get Dashboard Summary
 
-Retrieve subscription dashboard statistics including total counts, pricing, and breakdowns by status and category.
+Retrieve subscription dashboard statistics including active subscription count, monthly/yearly totals, and upcoming payment metrics.
 
 ```bash
 dotnet run --project src/Subly.Cli -- dashboard-summary
 ```
 
 **Output:**
-- Total subscription count
-- Total monthly and yearly costs
-- Breakdown by subscription status
-- Breakdown by category
+- Active subscription count
+- Total monthly cost
+- Total yearly cost
+- Upcoming payments in next 30 days (total and count)
 
 ---
 

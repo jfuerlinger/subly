@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommandLine;
 using Subly.Cli.Contracts;
 using Subly.Cli.Services;
@@ -30,8 +31,13 @@ public class SubscriptionUpdateStatusCommand
             }
 
             DateOnly? cancelledAtValue = null;
-            if (!string.IsNullOrWhiteSpace(CancelledAt) && DateOnly.TryParse(CancelledAt, out var ca))
+            if (!string.IsNullOrWhiteSpace(CancelledAt))
             {
+                if (!DateOnly.TryParseExact(CancelledAt, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var ca))
+                {
+                    Console.Error.WriteLine("Invalid cancellation date format. Use format: yyyy-MM-dd");
+                    return 1;
+                }
                 cancelledAtValue = ca;
             }
 

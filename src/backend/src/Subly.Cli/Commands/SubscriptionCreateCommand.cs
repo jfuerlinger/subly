@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommandLine;
 using Subly.Cli.Contracts;
 using Subly.Cli.Services;
@@ -41,27 +42,32 @@ public class SubscriptionCreateCommand
     {
         try
         {
-            if (!decimal.TryParse(Price, out var priceValue))
+            if (!decimal.TryParse(Price, CultureInfo.InvariantCulture, out var priceValue))
             {
-                Console.Error.WriteLine("Invalid price format");
+                Console.Error.WriteLine("Invalid price format. Use format like: 15.99");
                 return 1;
             }
 
-            if (!DateOnly.TryParse(NextPaymentDate, out var nextPaymentDateValue))
+            if (!DateOnly.TryParseExact(NextPaymentDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var nextPaymentDateValue))
             {
-                Console.Error.WriteLine("Invalid next payment date format");
+                Console.Error.WriteLine("Invalid next payment date format. Use format: yyyy-MM-dd");
                 return 1;
             }
 
-            if (!DateOnly.TryParse(StartedAt, out var startedAtValue))
+            if (!DateOnly.TryParseExact(StartedAt, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var startedAtValue))
             {
-                Console.Error.WriteLine("Invalid start date format");
+                Console.Error.WriteLine("Invalid start date format. Use format: yyyy-MM-dd");
                 return 1;
             }
 
             DateOnly? cancelledAtValue = null;
-            if (!string.IsNullOrWhiteSpace(CancelledAt) && DateOnly.TryParse(CancelledAt, out var ca))
+            if (!string.IsNullOrWhiteSpace(CancelledAt))
             {
+                if (!DateOnly.TryParseExact(CancelledAt, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var ca))
+                {
+                    Console.Error.WriteLine("Invalid cancellation date format. Use format: yyyy-MM-dd");
+                    return 1;
+                }
                 cancelledAtValue = ca;
             }
 

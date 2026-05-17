@@ -83,7 +83,7 @@ Subly includes a **Command-Line Interface (CLI)** (`Subly.Cli` project) that mir
    
 2. ✅ Add **API client methods** if needed in `src/Subly.Cli/Services/`
    - Implement HTTP calls to the new endpoint
-   - Use the same DTO contracts as the API
+   - Use DTO contracts that mirror the API response structure
 
 3. ✅ **Update the CLI Skill documentation** (`src/backend/SUBLY_CLI_SKILL.md`)
    - Add command examples
