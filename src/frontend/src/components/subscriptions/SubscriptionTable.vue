@@ -8,9 +8,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  updateStatus: [id: string, status: SubscriptionStatus]
+  updateStatus: [id: string, status: SubscriptionStatus, cancelledAt?: string | null]
   remove: [id: string]
 }>()
+
+const today = new Date().toISOString().slice(0, 10)
 
 // ─── Filter state ────────────────────────────────────────
 
@@ -47,7 +49,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoryDropdown))
 
 // ─── Sort state ──────────────────────────────────────────
 
-type SortKey = 'name' | 'category' | 'price' | 'nextPaymentDate' | 'status'
+type SortKey = 'name' | 'category' | 'price' | 'nextPaymentDate' | 'startedAt' | 'cancelledAt' | 'status'
 
 const sortKey = ref<SortKey | null>(null)
 const sortDir = ref<'asc' | 'desc'>('asc')
@@ -64,6 +66,10 @@ function toggleSort(key: SortKey) {
 function sortIcon(key: SortKey): string {
   if (sortKey.value !== key) return '⇅'
   return sortDir.value === 'asc' ? '↑' : '↓'
+}
+
+function cancelSubscription(subscription: Subscription) {
+  emit('updateStatus', subscription.id, 'cancelled', subscription.cancelledAt ?? today)
 }
 
 // ─── Filtered + sorted list ──────────────────────────────
@@ -93,7 +99,7 @@ const processedSubscriptions = computed(() => {
       if (typeof av === 'number' && typeof bv === 'number') {
         return (av - bv) * dir
       }
-      return String(av).localeCompare(String(bv)) * dir
+      return String(av ?? '').localeCompare(String(bv ?? '')) * dir
     })
   }
 
@@ -156,6 +162,12 @@ const processedSubscriptions = computed(() => {
             <th class="th-sortable" @click="toggleSort('nextPaymentDate')">
               Nächste Zahlung <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'nextPaymentDate' }">{{ sortIcon('nextPaymentDate') }}</span>
             </th>
+            <th class="th-sortable" @click="toggleSort('startedAt')">
+              Abgeschlossen am <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'startedAt' }">{{ sortIcon('startedAt') }}</span>
+            </th>
+            <th class="th-sortable" @click="toggleSort('cancelledAt')">
+              Kündigungsdatum <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'cancelledAt' }">{{ sortIcon('cancelledAt') }}</span>
+            </th>
             <th class="th-sortable" @click="toggleSort('status')">
               Status <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'status' }">{{ sortIcon('status') }}</span>
             </th>
@@ -164,18 +176,20 @@ const processedSubscriptions = computed(() => {
         </thead>
         <tbody>
           <tr v-if="processedSubscriptions.length === 0">
-            <td colspan="6" class="table-empty">Keine Abos gefunden.</td>
+            <td colspan="8" class="table-empty">Keine Abos gefunden.</td>
           </tr>
           <tr v-for="subscription in processedSubscriptions" :key="subscription.id">
             <td>{{ subscription.name }}</td>
             <td>{{ subscription.category }}</td>
             <td>{{ formatCurrency(subscription.price) }}</td>
             <td>{{ formatDate(subscription.nextPaymentDate) }}</td>
+            <td>{{ formatDate(subscription.startedAt) }}</td>
+            <td>{{ subscription.cancelledAt ? formatDate(subscription.cancelledAt) : '—' }}</td>
             <td>{{ subscription.status }}</td>
             <td class="actions">
               <button type="button" @click="emit('updateStatus', subscription.id, 'active')">Aktiv</button>
               <button type="button" @click="emit('updateStatus', subscription.id, 'paused')">Pausiert</button>
-              <button type="button" @click="emit('updateStatus', subscription.id, 'cancelled')">Gekündigt</button>
+              <button type="button" @click="cancelSubscription(subscription)">Gekündigt</button>
               <button type="button" class="danger" @click="emit('remove', subscription.id)">Löschen</button>
             </td>
           </tr>

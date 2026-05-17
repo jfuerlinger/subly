@@ -20,10 +20,12 @@ internal sealed class SubscriptionEntityConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(x => x.AutoRenew).IsRequired();
         builder.Property(x => x.StartedAt).IsRequired();
+        builder.Property(x => x.CancelledAt);
         builder.Property(x => x.NextPaymentDate).IsRequired();
 
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.NextPaymentDate);
+        builder.HasIndex(x => x.CancelledAt);
         builder.HasIndex(x => x.Category);
     }
 }

@@ -12,6 +12,7 @@ const categories = ref<CategoryDto[]>([])
 const showNewCategoryInput = ref(false)
 const newCategoryName = ref('')
 const newCategoryError = ref('')
+const today = new Date().toISOString().slice(0, 10)
 
 onMounted(async () => {
   categories.value = await fetchCategories()
@@ -23,8 +24,10 @@ const form = reactive<NewSubscriptionRequest>({
   category: '',
   price: 0,
   cycle: 'monthly',
-  nextPaymentDate: new Date().toISOString().slice(0, 10),
+  nextPaymentDate: today,
   paymentMethod: 'Visa',
+  startedAt: today,
+  cancelledAt: null,
 })
 
 function onCategoryChange(event: Event) {
@@ -71,13 +74,24 @@ function onSubmit() {
   if (!form.name || !form.vendor || !form.category || form.price <= 0) {
     return
   }
-  emit('submit', { ...form })
+
+  if (form.cancelledAt && form.cancelledAt < form.startedAt) {
+    return
+  }
+
+  emit('submit', {
+    ...form,
+    cancelledAt: form.cancelledAt ? form.cancelledAt : null,
+  })
   form.name = ''
   form.vendor = ''
   form.category = categories.value[0]?.name ?? ''
   form.price = 0
   form.cycle = 'monthly'
+  form.nextPaymentDate = today
   form.paymentMethod = 'Visa'
+  form.startedAt = today
+  form.cancelledAt = null
 }
 </script>
 
@@ -148,6 +162,17 @@ function onSubmit() {
       <div class="field">
         <label class="field-label">Zahlungsmethode</label>
         <input v-model="form.paymentMethod" type="text" placeholder="z.B. Visa" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label class="field-label">Abgeschlossen am</label>
+        <input v-model="form.startedAt" type="date" required>
+      </div>
+      <div class="field">
+        <label class="field-label">Kündigungsdatum</label>
+        <input v-model="form.cancelledAt" type="date">
       </div>
     </div>
 

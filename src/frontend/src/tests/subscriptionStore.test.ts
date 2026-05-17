@@ -16,6 +16,7 @@ const baseSubscription: Subscription = {
   status: 'active',
   autoRenew: true,
   startedAt: '2023-01-01',
+  cancelledAt: null,
 }
 
 const dashboard: DashboardSummary = {
@@ -53,6 +54,8 @@ describe('subscriptionStore', () => {
       cycle: 'monthly',
       nextPaymentDate: '2026-05-18',
       paymentMethod: 'Visa',
+      startedAt: '2026-04-01',
+      cancelledAt: null,
     }
     const created: Subscription = {
       id: 'new-id',
@@ -60,6 +63,7 @@ describe('subscriptionStore', () => {
       status: 'active',
       autoRenew: true,
       startedAt: '2026-05-16',
+      cancelledAt: null,
     }
     vi.spyOn(api, 'createSubscription').mockResolvedValue(created)
 

@@ -50,8 +50,15 @@ public sealed class SubscriptionsController(ISubscriptionService service) : Cont
         [FromBody] UpdateSubscriptionStatusRequest request,
         CancellationToken cancellationToken)
     {
-        var updated = await service.UpdateStatusAsync(id, request.Status, cancellationToken);
-        return updated is null ? NotFound() : Ok(updated);
+        try
+        {
+            var updated = await service.UpdateStatusAsync(id, request.Status, request.CancelledAt, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (ArgumentException exception)
+        {
+            return ValidationProblem(detail: exception.Message);
+        }
     }
 
     [HttpDelete("{id:guid}")]

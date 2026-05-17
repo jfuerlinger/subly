@@ -42,6 +42,7 @@ public static class SublyDataSeeder
             Subscription.Create("ChatGPT Plus", "OpenAI", "software", 22m, BillingCycle.Monthly, today.AddDays(3), "Visa •• 4421", today.AddYears(-1)),
             Subscription.Create("Amazon Prime", "Amazon", "membership", 89.90m, BillingCycle.Yearly, today.AddMonths(2), "Mastercard •• 0044", today.AddYears(-6)),
             Subscription.Create("iCloud+ 200GB", "Apple", "cloud", 2.99m, BillingCycle.Monthly, today.AddDays(10), "Apple Pay", today.AddYears(-5)),
+            Subscription.Create("Gym Membership", "Fit Club", "fitness", 29.90m, BillingCycle.Monthly, today.AddDays(12), "SEPA", today.AddYears(-2), today.AddMonths(-1), SubscriptionStatus.Cancelled, autoRenew: false),
         };
 
         await dbContext.Subscriptions.AddRangeAsync(data, cancellationToken);

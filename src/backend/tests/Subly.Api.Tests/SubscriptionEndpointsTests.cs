@@ -37,7 +37,9 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
             Price: 22m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: new DateOnly(2026, 5, 20),
-            PaymentMethod: "Visa");
+            PaymentMethod: "Visa",
+            StartedAt: new DateOnly(2026, 3, 10),
+            CancelledAt: null);
 
         var response = await client.PostAsJsonAsync("/api/subscriptions", request);
         var body = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
@@ -54,12 +56,29 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
         var targetId = subscriptions!.First().Id;
 
-        var response = await client.PatchAsJsonAsync($"/api/subscriptions/{targetId}/status", new UpdateSubscriptionStatusRequest(SubscriptionStatus.Paused));
+        var response = await client.PatchAsJsonAsync($"/api/subscriptions/{targetId}/status", new UpdateSubscriptionStatusRequest(SubscriptionStatus.Paused, null));
         var updated = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         updated.Should().NotBeNull();
         updated!.Status.Should().Be(SubscriptionStatus.Paused);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_ShouldPersistCancellationDate_WhenCancelled()
+    {
+        var client = factory.CreateClient();
+        var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+        var targetId = subscriptions!.First().Id;
+        var cancellationDate = new DateOnly(2026, 5, 15);
+
+        var response = await client.PatchAsJsonAsync($"/api/subscriptions/{targetId}/status", new UpdateSubscriptionStatusRequest(SubscriptionStatus.Cancelled, cancellationDate));
+        var updated = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        updated.Should().NotBeNull();
+        updated!.Status.Should().Be(SubscriptionStatus.Cancelled);
+        updated.CancelledAt.Should().Be(cancellationDate);
     }
 
     [Fact]

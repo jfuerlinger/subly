@@ -33,6 +33,8 @@ describe('subscriptionsApi', () => {
       cycle: 'monthly',
       nextPaymentDate: '2026-05-20',
       paymentMethod: 'Visa',
+      startedAt: '2026-04-01',
+      cancelledAt: null,
     }
     const responsePayload = { id: 'new-id', ...request, status: 'active', autoRenew: true, startedAt: '2026-05-16' } as Subscription
     vi.spyOn(apiClient, 'post').mockResolvedValue({ data: responsePayload } as AxiosResponse<Subscription>)
@@ -55,6 +57,7 @@ describe('subscriptionsApi', () => {
       status: 'paused',
       autoRenew: true,
       startedAt: '2026-01-01',
+      cancelledAt: null,
     } as Subscription
     vi.spyOn(apiClient, 'patch').mockResolvedValue({ data: responsePayload } as AxiosResponse<Subscription>)
 

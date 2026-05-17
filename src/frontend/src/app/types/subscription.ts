@@ -14,6 +14,7 @@ export interface Subscription {
   status: SubscriptionStatus
   autoRenew: boolean
   startedAt: string
+  cancelledAt: string | null
 }
 
 export interface NewSubscriptionRequest {
@@ -24,6 +25,8 @@ export interface NewSubscriptionRequest {
   cycle: BillingCycle
   nextPaymentDate: string
   paymentMethod: string
+  startedAt: string
+  cancelledAt: string | null
 }
 
 export interface DashboardSummary {
