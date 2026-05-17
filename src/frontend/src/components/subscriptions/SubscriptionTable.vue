@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Subscription, SubscriptionStatus } from '../../app/types/subscription'
 import { formatCurrency, formatDate } from '../../app/utils/formatting'
+import { getSubscriptionStatusMeta, subscriptionStatusOptions } from '../../app/utils/subscriptionStatus'
+import SubscriptionStatusBadge from './SubscriptionStatusBadge.vue'
 
 const props = defineProps<{
   subscriptions: Subscription[]
@@ -17,8 +19,9 @@ const today = new Date().toISOString().slice(0, 10)
 // ─── Filter state ────────────────────────────────────────
 
 const filterName = ref('')
-const filterStatus = ref<SubscriptionStatus | ''>('')
+const filterStatuses = ref<SubscriptionStatus[]>([])
 const filterCategories = ref<string[]>([])
+const statusDropdownOpen = ref(false)
 const categoryDropdownOpen = ref(false)
 
 const availableCategories = computed(() => {
@@ -32,6 +35,30 @@ const categoryLabel = computed(() => {
   return `${filterCategories.value.length} Kategorien`
 })
 
+const statusLabel = computed(() => {
+  if (filterStatuses.value.length === 0) return 'Alle Status'
+  if (filterStatuses.value.length === 1) {
+    return getSubscriptionStatusMeta(filterStatuses.value[0]).label
+  }
+  return `${filterStatuses.value.length} Status`
+})
+
+const singleSelectedStatus = computed<SubscriptionStatus | null>(() => {
+  if (filterStatuses.value.length !== 1) {
+    return null
+  }
+
+  return filterStatuses.value[0]
+})
+
+function toggleStatus(status: SubscriptionStatus) {
+  if (filterStatuses.value.includes(status)) {
+    filterStatuses.value = filterStatuses.value.filter((value) => value !== status)
+  } else {
+    filterStatuses.value = [...filterStatuses.value, status]
+  }
+}
+
 function toggleCategory(cat: string) {
   if (filterCategories.value.includes(cat)) {
     filterCategories.value = filterCategories.value.filter((c) => c !== cat)
@@ -40,12 +67,23 @@ function toggleCategory(cat: string) {
   }
 }
 
-function closeCategoryDropdown() {
+function toggleStatusDropdown() {
+  statusDropdownOpen.value = !statusDropdownOpen.value
   categoryDropdownOpen.value = false
 }
 
-onMounted(() => document.addEventListener('click', closeCategoryDropdown))
-onUnmounted(() => document.removeEventListener('click', closeCategoryDropdown))
+function toggleCategoryDropdown() {
+  categoryDropdownOpen.value = !categoryDropdownOpen.value
+  statusDropdownOpen.value = false
+}
+
+function closeDropdowns() {
+  statusDropdownOpen.value = false
+  categoryDropdownOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', closeDropdowns))
+onUnmounted(() => document.removeEventListener('click', closeDropdowns))
 
 // ─── Sort state ──────────────────────────────────────────
 
@@ -82,8 +120,8 @@ const processedSubscriptions = computed(() => {
     result = result.filter((s) => s.name.toLowerCase().includes(name))
   }
 
-  if (filterStatus.value) {
-    result = result.filter((s) => s.status === filterStatus.value)
+  if (filterStatuses.value.length > 0) {
+    result = result.filter((s) => filterStatuses.value.includes(s.status))
   }
 
   if (filterCategories.value.length > 0) {
@@ -118,21 +156,43 @@ const processedSubscriptions = computed(() => {
         class="filter-input"
       />
 
-      <select v-model="filterStatus" class="filter-select">
-        <option value="">Alle Status</option>
-        <option value="active">Aktiv</option>
-        <option value="paused">Pausiert</option>
-        <option value="cancelled">Gekündigt</option>
-      </select>
+      <div class="multiselect" @click.stop>
+        <button
+          type="button"
+          class="multiselect-trigger"
+          :class="{ 'multiselect-trigger--active': filterStatuses.length > 0 }"
+          @click="toggleStatusDropdown"
+        >
+          <span class="multiselect-trigger__label">
+            <SubscriptionStatusBadge v-if="singleSelectedStatus" :status="singleSelectedStatus" />
+            <span v-else>{{ statusLabel }}</span>
+          </span>
+          <span class="multiselect-arrow">{{ statusDropdownOpen ? '▲' : '▼' }}</span>
+        </button>
+        <div v-show="statusDropdownOpen" class="multiselect-panel">
+          <label
+            v-for="status in subscriptionStatusOptions"
+            :key="status.value"
+            class="multiselect-option"
+          >
+            <input
+              type="checkbox"
+              :checked="filterStatuses.includes(status.value)"
+              @change="toggleStatus(status.value)"
+            />
+            <SubscriptionStatusBadge :status="status.value" />
+          </label>
+        </div>
+      </div>
 
       <div class="multiselect" @click.stop>
         <button
           type="button"
           class="multiselect-trigger"
           :class="{ 'multiselect-trigger--active': filterCategories.length > 0 }"
-          @click="categoryDropdownOpen = !categoryDropdownOpen"
+          @click="toggleCategoryDropdown"
         >
-          {{ categoryLabel }}
+          <span class="multiselect-trigger__label">{{ categoryLabel }}</span>
           <span class="multiselect-arrow">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
         </button>
         <div v-show="categoryDropdownOpen" class="multiselect-panel">
@@ -185,11 +245,18 @@ const processedSubscriptions = computed(() => {
             <td>{{ formatDate(subscription.nextPaymentDate) }}</td>
             <td>{{ formatDate(subscription.startedAt) }}</td>
             <td>{{ subscription.cancelledAt ? formatDate(subscription.cancelledAt) : '—' }}</td>
-            <td>{{ subscription.status }}</td>
+            <td>
+              <SubscriptionStatusBadge :status="subscription.status" />
+            </td>
             <td class="actions">
-              <button type="button" @click="emit('updateStatus', subscription.id, 'active')">Aktiv</button>
-              <button type="button" @click="emit('updateStatus', subscription.id, 'paused')">Pausiert</button>
-              <button type="button" @click="cancelSubscription(subscription)">Gekündigt</button>
+              <button
+                v-for="status in subscriptionStatusOptions"
+                :key="status.value"
+                type="button"
+                @click="status.value === 'cancelled' ? cancelSubscription(subscription) : emit('updateStatus', subscription.id, status.value)"
+              >
+                {{ status.label }}
+              </button>
               <button type="button" class="danger" @click="emit('remove', subscription.id)">Löschen</button>
             </td>
           </tr>
