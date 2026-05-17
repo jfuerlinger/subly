@@ -13,4 +13,5 @@ public sealed record SubscriptionDto(
     string PaymentMethod,
     SubscriptionStatus Status,
     bool AutoRenew,
-    DateOnly StartedAt);
+    DateOnly StartedAt,
+    DateOnly? CancelledAt);

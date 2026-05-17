@@ -42,8 +42,8 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     await refreshSummary()
   }
 
-  async function updateStatus(id: string, status: SubscriptionStatus): Promise<void> {
-    const updated = await updateSubscriptionStatus(id, status)
+  async function updateStatus(id: string, status: SubscriptionStatus, cancelledAt?: string | null): Promise<void> {
+    const updated = await updateSubscriptionStatus(id, status, cancelledAt)
     subscriptions.value = subscriptions.value.map((subscription) => (subscription.id === id ? updated : subscription))
     await refreshSummary()
   }

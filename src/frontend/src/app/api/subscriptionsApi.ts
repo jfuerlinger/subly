@@ -16,8 +16,12 @@ export async function createSubscription(request: NewSubscriptionRequest): Promi
   return response.data
 }
 
-export async function updateSubscriptionStatus(id: string, status: SubscriptionStatus): Promise<Subscription> {
-  const response = await apiClient.patch<Subscription>(`/subscriptions/${id}/status`, { status })
+export async function updateSubscriptionStatus(
+  id: string,
+  status: SubscriptionStatus,
+  cancelledAt?: string | null,
+): Promise<Subscription> {
+  const response = await apiClient.patch<Subscription>(`/subscriptions/${id}/status`, { status, cancelledAt })
   return response.data
 }
 

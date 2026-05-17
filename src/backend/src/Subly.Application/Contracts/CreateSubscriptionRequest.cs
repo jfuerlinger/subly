@@ -9,4 +9,6 @@ public sealed record CreateSubscriptionRequest(
     decimal Price,
     BillingCycle Cycle,
     DateOnly NextPaymentDate,
-    string PaymentMethod);
+    string PaymentMethod,
+    DateOnly StartedAt,
+    DateOnly? CancelledAt);

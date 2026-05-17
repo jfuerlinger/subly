@@ -21,6 +21,7 @@ const sample: Subscription = {
   status: 'active',
   autoRenew: true,
   startedAt: '2025-01-01',
+  cancelledAt: null,
 }
 
 describe('subscriptionMath', () => {
@@ -79,6 +80,20 @@ describe('buildSpendingTrend', () => {
     const trend = buildSpendingTrend(subs, 1, today)
     expect(trend[0].total).toBe(10)
   })
+
+  it('keeps cancelled subscriptions in past months until their cancellation date', () => {
+    const today = new Date('2026-05-16')
+    const subs: Subscription[] = [
+      { ...sample, id: '1', startedAt: '2026-01-01', status: 'cancelled', cancelledAt: '2026-04-15', cycle: 'monthly', price: 30 },
+    ]
+
+    const trend = buildSpendingTrend(subs, 3, today)
+
+    // Mar: active, Apr: cancellation month still counted, May: no longer active.
+    expect(trend[0].total).toBe(30)
+    expect(trend[1].total).toBe(30)
+    expect(trend[2].total).toBe(0)
+  })
 })
 
 describe('buildPaymentForecast', () => {
@@ -108,6 +123,28 @@ describe('buildPaymentForecast', () => {
     expect(forecast[0].total).toBe(0)  // May – no yearly payment
     expect(forecast[1].total).toBe(120) // June – yearly payment
     expect(forecast[2].total).toBe(0)  // July
+  })
+
+  it('stops forecasting monthly payments after cancellation date', () => {
+    const today = new Date('2026-05-16')
+    const subs: Subscription[] = [
+      {
+        ...sample,
+        id: '1',
+        cycle: 'monthly',
+        price: 20,
+        nextPaymentDate: '2026-05-20',
+        status: 'cancelled',
+        cancelledAt: '2026-06-10',
+      },
+    ]
+
+    const forecast = buildPaymentForecast(subs, 3, today)
+
+    // May payment stays, June payment already after cancellation day, July also excluded.
+    expect(forecast[0].total).toBe(20)
+    expect(forecast[1].total).toBe(0)
+    expect(forecast[2].total).toBe(0)
   })
 })
 

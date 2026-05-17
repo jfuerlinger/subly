@@ -36,9 +36,9 @@ export interface SpendingTrendPoint {
 }
 
 /**
- * Returns the cumulative monthly cost of all currently-active subscriptions
- * for each of the last `monthCount` months. Uses `startedAt` to determine
- * when a subscription first contributed to the running total.
+ * Returns the cumulative monthly cost for each of the last `monthCount` months.
+ * Uses `startedAt` and `cancelledAt` to determine if a subscription was active
+ * in the respective month.
  */
 export function buildSpendingTrend(
   subscriptions: Subscription[],
@@ -48,6 +48,7 @@ export function buildSpendingTrend(
   return Array.from({ length: monthCount }, (_, i) => {
     const offset = monthCount - 1 - i
     const d = new Date(today.getFullYear(), today.getMonth() - offset, 1)
+    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1)
     const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0)
     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const label =
@@ -57,7 +58,21 @@ export function buildSpendingTrend(
 
     const total = round(
       subscriptions
-        .filter((s) => s.status === 'active' && new Date(s.startedAt) <= monthEnd)
+        .filter((s) => {
+          if (s.status === 'paused') {
+            return false
+          }
+
+          if (toDate(s.startedAt) > monthEnd) {
+            return false
+          }
+
+          if (!s.cancelledAt) {
+            return true
+          }
+
+          return toDate(s.cancelledAt) >= monthStart
+        })
         .reduce((sum, s) => sum + toMonthlyAmount(s), 0),
     )
 
@@ -81,7 +96,7 @@ export function buildPaymentForecast(
   monthCount = 12,
   today = new Date(),
 ): ForecastPoint[] {
-  const active = subscriptions.filter((s) => s.status === 'active')
+  const relevantSubscriptions = subscriptions.filter((s) => s.status !== 'paused')
 
   return Array.from({ length: monthCount }, (_, i) => {
     const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
@@ -94,22 +109,35 @@ export function buildPaymentForecast(
         : d.toLocaleString('de-DE', { month: 'short' })
 
     let total = 0
-    for (const s of active) {
+    for (const s of relevantSubscriptions) {
+      const cancelledAt = s.cancelledAt ? toDate(s.cancelledAt) : null
+      if (cancelledAt && cancelledAt < monthStart) {
+        continue
+      }
+
       if (s.cycle === 'monthly') {
         // Monthly subscriptions pay every month starting from the month of nextPaymentDate.
-        const nextD = new Date(s.nextPaymentDate)
+        const nextD = toDate(s.nextPaymentDate)
         const nextMonthStart = new Date(nextD.getFullYear(), nextD.getMonth(), 1)
         if (monthStart >= nextMonthStart) {
-          total += s.price
+          const paymentDate = paymentDateInMonth(nextD, monthStart)
+          if (paymentDate >= nextD && (!cancelledAt || paymentDate <= cancelledAt)) {
+            total += s.price
+          }
         }
       } else {
         // Yearly subscriptions pay only when the annual date falls in this month.
-        const next = new Date(s.nextPaymentDate)
+        const next = toDate(s.nextPaymentDate)
         const nextPlusYear = new Date(next.getFullYear() + 1, next.getMonth(), next.getDate())
-        if (
-          (next >= monthStart && next <= monthEnd) ||
-          (nextPlusYear >= monthStart && nextPlusYear <= monthEnd)
-        ) {
+        let paymentDate: Date | null = null
+
+        if (next >= monthStart && next <= monthEnd) {
+          paymentDate = next
+        } else if (nextPlusYear >= monthStart && nextPlusYear <= monthEnd) {
+          paymentDate = nextPlusYear
+        }
+
+        if (paymentDate && (!cancelledAt || paymentDate <= cancelledAt)) {
           total += s.price
         }
       }
@@ -143,4 +171,15 @@ export function buildPaymentMethodBreakdown(subscriptions: Subscription[]): Paym
 
 function round(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function toDate(value: string): Date {
+  return new Date(`${value}T00:00:00`)
+}
+
+function paymentDateInMonth(nextPaymentDate: Date, monthStart: Date): Date {
+  const year = monthStart.getFullYear()
+  const month = monthStart.getMonth()
+  const day = Math.min(nextPaymentDate.getDate(), new Date(year, month + 1, 0).getDate())
+  return new Date(year, month, day)
 }

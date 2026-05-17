@@ -29,6 +29,7 @@ public sealed class SubscriptionService(
     {
         await ValidateRequestAsync(request, cancellationToken);
 
+        var initialStatus = request.CancelledAt.HasValue ? SubscriptionStatus.Cancelled : SubscriptionStatus.Active;
         var subscription = Subscription.Create(
             request.Name,
             request.Vendor,
@@ -37,7 +38,9 @@ public sealed class SubscriptionService(
             request.Cycle,
             request.NextPaymentDate,
             request.PaymentMethod,
-            dateProvider.Today);
+            request.StartedAt,
+            request.CancelledAt,
+            initialStatus);
 
         await repository.AddAsync(subscription, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -45,7 +48,7 @@ public sealed class SubscriptionService(
         return ToDto(subscription);
     }
 
-    public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, CancellationToken cancellationToken = default)
+    public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, DateOnly? cancelledAt, CancellationToken cancellationToken = default)
     {
         var subscription = await repository.GetByIdAsync(id, cancellationToken);
         if (subscription is null)
@@ -53,7 +56,10 @@ public sealed class SubscriptionService(
             return null;
         }
 
-        subscription.UpdateStatus(status);
+        DateOnly? effectiveCancelledAt = status is SubscriptionStatus.Cancelled
+            ? cancelledAt ?? dateProvider.Today
+            : null;
+        subscription.UpdateStatus(status, effectiveCancelledAt);
         await repository.SaveChangesAsync(cancellationToken);
 
         return ToDto(subscription);
@@ -113,7 +119,8 @@ public sealed class SubscriptionService(
             subscription.PaymentMethod,
             subscription.Status,
             subscription.AutoRenew,
-            subscription.StartedAt);
+            subscription.StartedAt,
+            subscription.CancelledAt);
     }
 
     private async Task ValidateRequestAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken)
@@ -121,6 +128,11 @@ public sealed class SubscriptionService(
         if (request.Price <= 0m)
         {
             throw new ArgumentOutOfRangeException(nameof(request.Price), "Price must be greater than zero.");
+        }
+
+        if (request.CancelledAt.HasValue && request.CancelledAt.Value < request.StartedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.CancelledAt), "Cancelled date cannot be earlier than start date.");
         }
 
         if (string.IsNullOrWhiteSpace(request.Category))

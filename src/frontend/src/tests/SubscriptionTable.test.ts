@@ -16,6 +16,7 @@ const subscriptions: Subscription[] = [
     status: 'active',
     autoRenew: true,
     startedAt: '2023-01-01',
+    cancelledAt: null,
   },
   {
     id: 'sub-2',
@@ -29,6 +30,7 @@ const subscriptions: Subscription[] = [
     status: 'paused',
     autoRenew: true,
     startedAt: '2024-02-01',
+    cancelledAt: null,
   },
   {
     id: 'sub-3',
@@ -42,6 +44,7 @@ const subscriptions: Subscription[] = [
     status: 'cancelled',
     autoRenew: false,
     startedAt: '2024-03-01',
+    cancelledAt: '2026-01-15',
   },
 ]
 

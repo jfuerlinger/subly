@@ -28,6 +28,8 @@ public sealed class Subscription
 
     public DateOnly StartedAt { get; private set; }
 
+    public DateOnly? CancelledAt { get; private set; }
+
     public static Subscription Create(
         string name,
         string vendor,
@@ -37,6 +39,7 @@ public sealed class Subscription
         DateOnly nextPaymentDate,
         string paymentMethod,
         DateOnly startedAt,
+        DateOnly? cancelledAt = null,
         SubscriptionStatus status = SubscriptionStatus.Active,
         bool autoRenew = true)
     {
@@ -65,6 +68,21 @@ public sealed class Subscription
             throw new ArgumentException("Payment method is required.", nameof(paymentMethod));
         }
 
+        if (cancelledAt.HasValue && cancelledAt.Value < startedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cancelledAt), "Cancelled date cannot be earlier than start date.");
+        }
+
+        if (status is SubscriptionStatus.Cancelled && !cancelledAt.HasValue)
+        {
+            throw new ArgumentException("Cancelled date is required when status is cancelled.", nameof(cancelledAt));
+        }
+
+        if (status is not SubscriptionStatus.Cancelled && cancelledAt.HasValue)
+        {
+            throw new ArgumentException("Cancelled date can only be set when status is cancelled.", nameof(cancelledAt));
+        }
+
         return new Subscription
         {
             Id = Guid.NewGuid(),
@@ -76,13 +94,33 @@ public sealed class Subscription
             NextPaymentDate = nextPaymentDate,
             PaymentMethod = paymentMethod.Trim(),
             StartedAt = startedAt,
+            CancelledAt = cancelledAt,
             Status = status,
             AutoRenew = autoRenew,
         };
     }
 
-    public void UpdateStatus(SubscriptionStatus status)
+    public void UpdateStatus(SubscriptionStatus status, DateOnly? cancelledAt = null)
     {
+        if (status is SubscriptionStatus.Cancelled)
+        {
+            if (!cancelledAt.HasValue)
+            {
+                throw new ArgumentException("Cancelled date is required when status is cancelled.", nameof(cancelledAt));
+            }
+
+            if (cancelledAt.Value < StartedAt)
+            {
+                throw new ArgumentOutOfRangeException(nameof(cancelledAt), "Cancelled date cannot be earlier than start date.");
+            }
+
+            CancelledAt = cancelledAt.Value;
+        }
+        else
+        {
+            CancelledAt = null;
+        }
+
         Status = status;
     }
 }

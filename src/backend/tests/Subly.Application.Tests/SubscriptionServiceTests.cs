@@ -18,7 +18,7 @@ public sealed class SubscriptionServiceTests
         [
             Subscription.Create("Netflix", "Netflix", "streaming", 17.99m, BillingCycle.Monthly, now.AddDays(5), "Visa", now.AddYears(-1)),
             Subscription.Create("Prime", "Amazon", "streaming", 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
-            Subscription.Create("Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), SubscriptionStatus.Paused),
+            Subscription.Create("Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), status: SubscriptionStatus.Paused),
         ]);
         var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
 
@@ -44,7 +44,9 @@ public sealed class SubscriptionServiceTests
             Price: 22m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: now.AddDays(3),
-            PaymentMethod: "Visa");
+            PaymentMethod: "Visa",
+            StartedAt: now.AddMonths(-2),
+            CancelledAt: null);
 
         var created = await service.CreateSubscriptionAsync(request);
         var stored = await repository.GetByIdAsync(created.Id);
@@ -52,7 +54,7 @@ public sealed class SubscriptionServiceTests
         created.Name.Should().Be("ChatGPT Plus");
         created.Status.Should().Be(SubscriptionStatus.Active);
         stored.Should().NotBeNull();
-        stored!.StartedAt.Should().Be(now);
+        stored!.StartedAt.Should().Be(now.AddMonths(-2));
     }
 
     [Fact]
@@ -61,9 +63,24 @@ public sealed class SubscriptionServiceTests
         var repository = new InMemorySubscriptionRepository();
         var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
-        var result = await service.UpdateStatusAsync(Guid.NewGuid(), SubscriptionStatus.Cancelled);
+        var result = await service.UpdateStatusAsync(Guid.NewGuid(), SubscriptionStatus.Cancelled, null);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateStatusAsync_ShouldSetCancelledDateToToday_WhenNoDateIsProvided()
+    {
+        var now = new DateOnly(2026, 5, 16);
+        var existing = Subscription.Create("Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var repository = new InMemorySubscriptionRepository([existing]);
+        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
+
+        var updated = await service.UpdateStatusAsync(existing.Id, SubscriptionStatus.Cancelled, null);
+
+        updated.Should().NotBeNull();
+        updated!.Status.Should().Be(SubscriptionStatus.Cancelled);
+        updated.CancelledAt.Should().Be(now);
     }
 
     [Fact]

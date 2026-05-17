@@ -2,4 +2,4 @@ using Subly.Domain.Models;
 
 namespace Subly.Application.Contracts;
 
-public sealed record UpdateSubscriptionStatusRequest(SubscriptionStatus Status);
+public sealed record UpdateSubscriptionStatusRequest(SubscriptionStatus Status, DateOnly? CancelledAt);

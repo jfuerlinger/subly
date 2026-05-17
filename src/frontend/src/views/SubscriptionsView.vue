@@ -8,8 +8,8 @@ import SubscriptionTable from '../components/subscriptions/SubscriptionTable.vue
 const store = useSubscriptionStore()
 const showModal = ref(false)
 
-async function updateStatus(id: string, status: SubscriptionStatus) {
-  await store.updateStatus(id, status)
+async function updateStatus(id: string, status: SubscriptionStatus, cancelledAt?: string | null) {
+  await store.updateStatus(id, status, cancelledAt)
 }
 
 async function remove(id: string) {
