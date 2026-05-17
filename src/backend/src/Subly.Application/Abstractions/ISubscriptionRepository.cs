@@ -12,5 +12,7 @@ public interface ISubscriptionRepository
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task DeleteAllAsync(CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

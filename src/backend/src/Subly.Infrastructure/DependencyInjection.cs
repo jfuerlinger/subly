@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Subly.Application.Abstractions;
+using Subly.Application.Services;
 using Subly.Infrastructure.Persistence;
 using Subly.Infrastructure.Persistence.Repositories;
 using Subly.Infrastructure.Seeding;
+using Subly.Infrastructure.Services;
 
 namespace Subly.Infrastructure;
 
@@ -22,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddScoped<ICategoryRepository, EfCategoryRepository>();
         services.AddSingleton<IDateProvider, SystemDateProvider>();
+        services.AddScoped<IAdminService, AdminService>();
 
         return services;
     }
