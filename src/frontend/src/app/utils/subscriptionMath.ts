@@ -169,6 +169,102 @@ export function buildPaymentMethodBreakdown(subscriptions: Subscription[]): Paym
     .sort((a, b) => b.total - a.total)
 }
 
+// ─── Calendar helpers ──────────────────────────────────────────────────────
+
+export interface CalendarPaymentEntry {
+  subscription: Subscription
+  date: Date
+  amount: number
+}
+
+/** Converts a local Date to an ISO date string key ("YYYY-MM-DD"). */
+export function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Returns all dates within [rangeStart, rangeEnd] on which a subscription has a payment.
+ * Paused subscriptions are excluded. Cancelled subscriptions are included up to their
+ * cancellation date. The payment day-of-month is derived from nextPaymentDate; the
+ * subscription's startedAt is used as the earliest possible payment date.
+ */
+export function getPaymentDatesInRange(
+  subscription: Subscription,
+  rangeStart: Date,
+  rangeEnd: Date,
+): Date[] {
+  if (subscription.status === 'paused') return []
+
+  const startedAt = toDate(subscription.startedAt)
+  const cancelledAt = subscription.cancelledAt ? toDate(subscription.cancelledAt) : null
+  const nextPayment = toDate(subscription.nextPaymentDate)
+  const effectiveEnd = cancelledAt ?? rangeEnd
+
+  const dates: Date[] = []
+
+  if (subscription.cycle === 'monthly') {
+    const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1)
+    while (cursor <= rangeEnd) {
+      const year = cursor.getFullYear()
+      const month = cursor.getMonth()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const day = Math.min(nextPayment.getDate(), daysInMonth)
+      const paymentDate = new Date(year, month, day)
+
+      if (
+        paymentDate >= rangeStart &&
+        paymentDate <= rangeEnd &&
+        paymentDate >= startedAt &&
+        paymentDate <= effectiveEnd
+      ) {
+        dates.push(paymentDate)
+      }
+
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+  } else {
+    // Yearly: same month/day each year — check all years that overlap the range.
+    const startYear = Math.min(startedAt.getFullYear(), rangeStart.getFullYear()) - 1
+    const endYear = rangeEnd.getFullYear() + 1
+    for (let year = startYear; year <= endYear; year++) {
+      const candidate = new Date(year, nextPayment.getMonth(), nextPayment.getDate())
+      if (
+        candidate >= rangeStart &&
+        candidate <= rangeEnd &&
+        candidate >= startedAt &&
+        candidate <= effectiveEnd
+      ) {
+        dates.push(candidate)
+      }
+    }
+  }
+
+  return dates
+}
+
+/**
+ * Groups all subscription payment dates within [rangeStart, rangeEnd] by date key.
+ * Returns a Map<"YYYY-MM-DD", CalendarPaymentEntry[]>.
+ */
+export function buildCalendarPayments(
+  subscriptions: Subscription[],
+  rangeStart: Date,
+  rangeEnd: Date,
+): Map<string, CalendarPaymentEntry[]> {
+  const map = new Map<string, CalendarPaymentEntry[]>()
+  for (const sub of subscriptions) {
+    for (const date of getPaymentDatesInRange(sub, rangeStart, rangeEnd)) {
+      const key = toDateKey(date)
+      const entries = map.get(key) ?? []
+      entries.push({ subscription: sub, date, amount: sub.price })
+      map.set(key, entries)
+    }
+  }
+  return map
+}
+
+// ─── Internal helpers ──────────────────────────────────────────────────────
+
 function round(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
 }

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCalendarPayments,
   buildDashboardSummary,
   buildPaymentForecast,
   buildPaymentMethodBreakdown,
   buildSpendingTrend,
+  getPaymentDatesInRange,
+  toDateKey,
   toMonthlyAmount,
   toYearlyAmount,
 } from '../app/utils/subscriptionMath'
@@ -161,5 +164,104 @@ describe('buildPaymentMethodBreakdown', () => {
     expect(result).toHaveLength(2)
     expect(result[0]).toMatchObject({ method: 'Visa', total: 30, count: 2 })
     expect(result[1]).toMatchObject({ method: 'PayPal', total: 5, count: 1 })
+  })
+})
+
+describe('toDateKey', () => {
+  it('formats a date as YYYY-MM-DD using local time', () => {
+    expect(toDateKey(new Date(2026, 4, 7))).toBe('2026-05-07') // month is 0-based
+    expect(toDateKey(new Date(2026, 11, 31))).toBe('2026-12-31')
+  })
+})
+
+describe('getPaymentDatesInRange', () => {
+  const base: Subscription = {
+    ...sample,
+    id: 'sub1',
+    cycle: 'monthly',
+    price: 10,
+    startedAt: '2026-01-01',
+    nextPaymentDate: '2026-05-15',
+    cancelledAt: null,
+    status: 'active',
+  }
+
+  it('returns monthly payment dates within the range', () => {
+    const start = new Date(2026, 4, 1)  // 2026-05-01
+    const end = new Date(2026, 6, 31)   // 2026-07-31
+    const dates = getPaymentDatesInRange(base, start, end)
+    expect(dates.map(toDateKey)).toEqual(['2026-05-15', '2026-06-15', '2026-07-15'])
+  })
+
+  it('returns past monthly payment dates using startedAt as lower bound', () => {
+    const start = new Date(2026, 1, 1)  // 2026-02-01
+    const end = new Date(2026, 3, 30)   // 2026-04-30
+    const dates = getPaymentDatesInRange(base, start, end)
+    expect(dates.map(toDateKey)).toEqual(['2026-02-15', '2026-03-15', '2026-04-15'])
+  })
+
+  it('does not return dates before startedAt', () => {
+    const sub = { ...base, startedAt: '2026-03-01' }
+    const start = new Date(2026, 0, 1)  // 2026-01-01
+    const end = new Date(2026, 4, 31)   // 2026-05-31
+    const dates = getPaymentDatesInRange(sub, start, end)
+    // Jan and Feb are before startedAt (2026-03-01), so only Mar, Apr, May
+    expect(dates.map(toDateKey)).toEqual(['2026-03-15', '2026-04-15', '2026-05-15'])
+  })
+
+  it('excludes dates after cancelledAt', () => {
+    const sub = { ...base, status: 'cancelled' as const, cancelledAt: '2026-06-10' }
+    const start = new Date(2026, 4, 1)
+    const end = new Date(2026, 6, 31)
+    const dates = getPaymentDatesInRange(sub, start, end)
+    // June 15 is after cancelledAt June 10, July 15 is after too → only May
+    expect(dates.map(toDateKey)).toEqual(['2026-05-15'])
+  })
+
+  it('returns empty array for paused subscriptions', () => {
+    const sub = { ...base, status: 'paused' as const }
+    const dates = getPaymentDatesInRange(sub, new Date(2026, 4, 1), new Date(2026, 6, 31))
+    expect(dates).toHaveLength(0)
+  })
+
+  it('handles months with fewer days than the payment day (clamps to last day)', () => {
+    const sub = { ...base, nextPaymentDate: '2026-05-31' }
+    const start = new Date(2026, 1, 1)  // 2026-02
+    const end = new Date(2026, 1, 28)
+    const dates = getPaymentDatesInRange(sub, start, end)
+    // Feb has 28 days in 2026 → payment clamped to 28th
+    expect(dates.map(toDateKey)).toEqual(['2026-02-28'])
+  })
+
+  it('returns yearly payment dates in range', () => {
+    const sub = { ...base, cycle: 'yearly' as const, nextPaymentDate: '2026-05-15' }
+    const start = new Date(2025, 0, 1)
+    const end = new Date(2027, 11, 31)
+    const dates = getPaymentDatesInRange(sub, start, end)
+    // startedAt is 2026-01-01, so 2025-05-15 is before startedAt → skip; 2026 and 2027 are in range
+    expect(dates.map(toDateKey)).toEqual(['2026-05-15', '2027-05-15'])
+  })
+})
+
+describe('buildCalendarPayments', () => {
+  it('groups multiple subscriptions by date key', () => {
+    const sub1: Subscription = { ...sample, id: '1', cycle: 'monthly', nextPaymentDate: '2026-05-15', startedAt: '2026-01-01', cancelledAt: null, status: 'active', price: 10 }
+    const sub2: Subscription = { ...sample, id: '2', cycle: 'monthly', nextPaymentDate: '2026-05-15', startedAt: '2026-01-01', cancelledAt: null, status: 'active', price: 20 }
+    const sub3: Subscription = { ...sample, id: '3', cycle: 'monthly', nextPaymentDate: '2026-05-20', startedAt: '2026-01-01', cancelledAt: null, status: 'active', price: 30 }
+
+    const start = new Date(2026, 4, 1)
+    const end = new Date(2026, 4, 31)
+    const result = buildCalendarPayments([sub1, sub2, sub3], start, end)
+
+    expect(result.size).toBe(2)
+    expect(result.get('2026-05-15')).toHaveLength(2)
+    expect(result.get('2026-05-20')).toHaveLength(1)
+    expect(result.get('2026-05-20')![0].amount).toBe(30)
+  })
+
+  it('returns an empty map when there are no active subscriptions', () => {
+    const sub: Subscription = { ...sample, id: '1', status: 'paused' }
+    const result = buildCalendarPayments([sub], new Date(2026, 4, 1), new Date(2026, 4, 31))
+    expect(result.size).toBe(0)
   })
 })
