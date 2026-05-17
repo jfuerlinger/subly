@@ -33,6 +33,13 @@ public sealed class EfSubscriptionRepository(SublyDbContext dbContext) : ISubscr
         return true;
     }
 
+    public async Task DeleteAllAsync(CancellationToken cancellationToken = default)
+    {
+        var all = await dbContext.Subscriptions.ToListAsync(cancellationToken);
+        dbContext.Subscriptions.RemoveRange(all);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);
