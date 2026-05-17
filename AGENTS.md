@@ -67,3 +67,4 @@ For the core technologies in this project, use these Context7 library IDs direct
 - Use metric/European units in all documentation and comments.
 - Write commit messages in English.
 - Prefer clear, readable code over clever one-liners.
+- If `docker` CLI isn't available, use equivalent `podman` commands for container build/run checks.
