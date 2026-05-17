@@ -5,7 +5,7 @@
 Subly is a full-stack subscription management app.
 
 - **Frontend:** Vue 3 + TypeScript + Vite + Pinia + Vue Router
-- **Backend:** ASP.NET Core 9, Clean Architecture (Domain / Application / Infrastructure / Api)
+- **Backend:** ASP.NET Core 10, Clean Architecture (Domain / Application / Infrastructure / Api)
 - **Database:** PostgreSQL via Entity Framework Core (Npgsql)
 - **Orchestration:** .NET Aspire AppHost (dev), Docker Compose (containerised)
 
@@ -45,6 +45,10 @@ npm run build     # type-check + Vite production build
 cd .\src
 docker compose up --build   # builds and starts everything
 docker compose down
+
+# If docker CLI is unavailable in the environment, use podman instead
+podman compose up --build
+podman compose down
 ```
 
 ## Architecture

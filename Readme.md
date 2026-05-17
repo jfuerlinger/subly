@@ -6,7 +6,7 @@ Die App bietet ein Dashboard mit Kennzahlen (monatlich/jährlich/anstehende Zahl
 ## Tech-Stack
 
 - **Frontend:** Vue 3, TypeScript, Vite, Pinia, Vue Router
-- **Backend:** ASP.NET Core 9, Clean-Architecture-ähnliche Schichten (Api/Application/Domain/Infrastructure)
+- **Backend:** ASP.NET Core 10, Clean-Architecture-ähnliche Schichten (Api/Application/Domain/Infrastructure)
 - **Datenbank:** PostgreSQL mit Entity Framework Core (Npgsql)
 - **Orchestrierung (lokal):** .NET Aspire AppHost
 - **CI/CD:** GitHub Actions → DockerHub
@@ -97,7 +97,7 @@ src/
 
 Voraussetzungen:
 
-- .NET SDK 9
+- .NET SDK 10
 - Node.js 22+
 - Docker (für PostgreSQL-Container)
 
