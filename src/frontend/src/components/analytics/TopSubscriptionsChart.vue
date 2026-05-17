@@ -113,20 +113,20 @@ function updateTooltip(e: MouseEvent) {
           v-if="hoveredIndex === i"
           x="0" :y="row.yTop"
           :width="VIEW_W" :height="ROW_H"
-          fill="#f9fafb" rx="4"
+          fill="var(--color-primary-light)" rx="4"
         />
 
         <!-- Name label -->
         <text
           :x="LABEL_W - 4" :y="row.textY"
-          text-anchor="end" font-size="11" fill="#374151"
+          text-anchor="end" font-size="11" fill="var(--color-text-muted)"
         >{{ truncate(row.name, 18) }}</text>
 
         <!-- Bar track -->
         <rect
           :x="BAR_X" :y="row.barY"
           :width="BAR_MAX_W" height="18"
-          fill="#f3f4f6" rx="4"
+          fill="var(--color-border-light)" rx="4"
         />
 
         <!-- Value bar -->
@@ -141,7 +141,7 @@ function updateTooltip(e: MouseEvent) {
         <!-- Amount label -->
         <text
           :x="VIEW_W - 2" :y="row.textY"
-          text-anchor="end" font-size="11" font-weight="600" fill="#111827"
+          text-anchor="end" font-size="11" font-weight="600" fill="var(--color-text)"
         >{{ formatCurrency(row.monthly) }}</text>
       </g>
     </svg>

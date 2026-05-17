@@ -20,6 +20,11 @@ const routes = [
     name: 'analytics',
     component: () => import('../../views/AnalyticsView.vue'),
   },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../../views/ProfileSettingsView.vue'),
+  },
 ]
 
 export const router = createRouter({
@@ -30,7 +35,6 @@ export const router = createRouter({
 const dynamicImportFetchError = 'Failed to fetch dynamically imported module'
 const dynamicImportReloadKey = 'subly:dynamic-import-reloads'
 const fallbackRetriedPaths = new Set<string>()
-
 // In dev mode, Vite can trigger a full page reload when it detects new
 // dependencies during a session (e.g. after adding a new source file that
 // introduces a new import chain). This causes any in-flight dynamic import
@@ -83,7 +87,6 @@ router.onError((err, to) => {
         '[router] Failed to persist retry guard. Multiple reload attempts may occur for this route.',
       )
     }
-
     window.location.href = to.fullPath
   }
 })
