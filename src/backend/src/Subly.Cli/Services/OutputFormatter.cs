@@ -80,22 +80,9 @@ public static class OutputFormatter
     public static void PrintDashboardSummary(DashboardSummaryDto summary)
     {
         Console.WriteLine("\n=== Dashboard Summary ===");
-        Console.WriteLine($"Total Subscriptions:       {summary.TotalSubscriptions}");
-        Console.WriteLine($"Total Monthly Price:       €{summary.TotalMonthlyPrice:F2}");
-        Console.WriteLine($"Total Yearly Price:        €{summary.TotalYearlyPrice:F2}");
-
-        Console.WriteLine("\nBy Status:");
-        foreach (var kvp in summary.ByStatus)
-        {
-            Console.WriteLine($"  {kvp.Key,-20} {kvp.Value,3} subscriptions");
-        }
-
-        Console.WriteLine("\nBy Category:");
-        foreach (var kvp in summary.ByCategory)
-        {
-            Console.WriteLine($"  {kvp.Key,-20} {kvp.Value,3} subscriptions");
-        }
-
+        Console.WriteLine($"Active Subscriptions:      {summary.ActiveSubscriptionsCount}");
+        Console.WriteLine($"Monthly Total:             €{summary.MonthlyTotal:F2}");
+        Console.WriteLine($"Yearly Total:              €{summary.YearlyTotal:F2}");
         Console.WriteLine();
     }
 
