@@ -761,3 +761,12 @@ button.danger {
   background: #3f1d24;
   color: #fca5a5;
 }
+
+[data-theme="dark"] button {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] button:hover {
+  background: var(--color-border-light);
+}
