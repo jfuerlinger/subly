@@ -155,7 +155,6 @@ onMounted(async () => {
     <CalendarWeekView
       v-else
       :week-start="weekStart"
-      :week-end="weekEnd"
       :payments-by-date="paymentsByDate"
     />
   </section>

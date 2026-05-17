@@ -6,27 +6,13 @@ import { formatCurrency } from '../../app/utils/formatting'
 
 const props = defineProps<{
   weekStart: Date
-  weekEnd: Date
   paymentsByDate: Map<string, CalendarPaymentEntry[]>
 }>()
 
 const WEEK_DAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-const CATEGORY_COLORS: Record<string, string> = {
-  streaming: '#f97316',
-  software: '#3b82f6',
-  insurance: '#22c55e',
-  telecom: '#06b6d4',
-  energy: '#eab308',
-  fitness: '#ef4444',
-  news: '#a855f7',
-  cloud: '#0ea5e9',
-  membership: '#6366f1',
-}
-const FALLBACK_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#06b6d4', '#eab308', '#ef4444', '#a855f7', '#0ea5e9', '#6366f1']
-
 function categoryColor(category: string): string {
-  return CATEGORY_COLORS[category] ?? FALLBACK_COLORS[category.charCodeAt(0) % FALLBACK_COLORS.length]
+  return `var(--category-${category}, var(--color-primary))`
 }
 
 interface WeekDay {

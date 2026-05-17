@@ -241,6 +241,15 @@ describe('getPaymentDatesInRange', () => {
     // startedAt is 2026-01-01, so 2025-05-15 is before startedAt → skip; 2026 and 2027 are in range
     expect(dates.map(toDateKey)).toEqual(['2026-05-15', '2027-05-15'])
   })
+
+  it('clamps yearly leap-day payments to month end in non-leap years', () => {
+    const sub = { ...base, cycle: 'yearly' as const, nextPaymentDate: '2024-02-29', startedAt: '2024-01-01' }
+    const start = new Date(2025, 1, 1)
+    const end = new Date(2026, 1, 28)
+    const dates = getPaymentDatesInRange(sub, start, end)
+
+    expect(dates.map(toDateKey)).toEqual(['2025-02-28', '2026-02-28'])
+  })
 })
 
 describe('buildCalendarPayments', () => {
