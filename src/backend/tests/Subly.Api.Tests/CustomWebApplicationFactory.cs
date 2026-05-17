@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Subly.Infrastructure.Persistence;
@@ -21,6 +22,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             {
                 var opts = new DbContextOptionsBuilder<SublyDbContext>()
                     .UseInMemoryDatabase(dbName)
+                    .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                     .Options;
                 return new SublyDbContext(opts);
             }));

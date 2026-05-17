@@ -134,6 +134,12 @@ public sealed class SubscriptionServiceTests
             return Task.FromResult(removed);
         }
 
+        public Task DeleteAllAsync(CancellationToken cancellationToken = default)
+        {
+            _items.Clear();
+            return Task.CompletedTask;
+        }
+
         public Task<Subscription?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_items.SingleOrDefault(x => x.Id == id));

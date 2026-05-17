@@ -26,6 +26,11 @@ const routes = [
     component: () => import('../../views/AnalyticsView.vue'),
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../../views/SettingsView.vue'),
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import('../../views/ProfileSettingsView.vue'),
