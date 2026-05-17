@@ -68,3 +68,52 @@ For the core technologies in this project, use these Context7 library IDs direct
 - Write commit messages in English.
 - Prefer clear, readable code over clever one-liners.
 - If `docker` CLI isn't available, use equivalent `podman` commands for container build/run checks.
+
+## CLI & API Maintenance
+
+### ⚠️ Important: Feature Parity Between API and CLI
+
+Subly includes a **Command-Line Interface (CLI)** (`Subly.Cli` project) that mirrors all API functionality. The CLI is a thin HTTP client that calls the API directly—**there is no duplicate business logic**.
+
+**Whenever you add or modify an API endpoint, you must also:**
+
+1. ✅ Create a corresponding **CLI verb** in `src/Subly.Cli/Commands/`
+   - Use CommandLineParser for verb implementation
+   - Follow naming: `<resource>-<action>` (e.g., `subscription-create`, `category-list`)
+   
+2. ✅ Add **API client methods** if needed in `src/Subly.Cli/Services/`
+   - Implement HTTP calls to the new endpoint
+   - Use the same DTO contracts as the API
+
+3. ✅ **Update the CLI Skill documentation** (`src/backend/SUBLY_CLI_SKILL.md`)
+   - Add command examples
+   - Document parameters and options
+   - Update the endpoint mapping table
+
+4. ✅ **Test** the new CLI verb works end-to-end
+   - Verify HTTP requests are correct
+   - Test error cases and validation
+
+**Failure to maintain feature parity will result in incomplete CLI functionality.**
+
+### CLI Architecture
+
+- **Project:** `src/backend/src/Subly.Cli`
+- **Verbs:** One file per command in `Commands/` folder
+- **Services:** API clients in `Services/` folder (SubscriptionApiClient, CategoryApiClient, DashboardApiClient)
+- **Contracts:** DTOs in `Contracts/` folder (mirrors API DTOs)
+- **Parser:** Uses CommandLineParser library (not System.CommandLine)
+- **Base API URL:** Configurable via `--api-url` or `-u` option (default: `http://localhost:5000`)
+
+### Current CLI Verbs
+
+| Verb | Endpoint | Implementation |
+|------|----------|---|
+| `subscription-list` | GET /api/subscriptions | ✅ Done |
+| `subscription-get` | GET /api/subscriptions/{id} | ✅ Done |
+| `subscription-create` | POST /api/subscriptions | ✅ Done |
+| `subscription-update-status` | PATCH /api/subscriptions/{id}/status | ✅ Done |
+| `subscription-delete` | DELETE /api/subscriptions/{id} | ✅ Done |
+| `dashboard-summary` | GET /api/dashboard/summary | ✅ Done |
+| `category-list` | GET /api/categories | ✅ Done |
+| `category-create` | POST /api/categories | ✅ Done |
