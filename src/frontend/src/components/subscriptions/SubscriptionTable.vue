@@ -110,6 +110,15 @@ function cancelSubscription(subscription: Subscription) {
   emit('updateStatus', subscription.id, 'cancelled', subscription.cancelledAt ?? today)
 }
 
+function handleStatusChange(subscription: Subscription, status: SubscriptionStatus) {
+  if (status === 'cancelled') {
+    cancelSubscription(subscription)
+    return
+  }
+
+  emit('updateStatus', subscription.id, status)
+}
+
 // ─── Filtered + sorted list ──────────────────────────────
 
 const processedSubscriptions = computed(() => {
@@ -253,7 +262,7 @@ const processedSubscriptions = computed(() => {
                 v-for="status in subscriptionStatusOptions"
                 :key="status.value"
                 type="button"
-                @click="status.value === 'cancelled' ? cancelSubscription(subscription) : emit('updateStatus', subscription.id, status.value)"
+                @click="handleStatusChange(subscription, status.value)"
               >
                 {{ status.label }}
               </button>
