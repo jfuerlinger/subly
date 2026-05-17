@@ -24,7 +24,7 @@ public class SubscriptionApiClient
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<SubscriptionDto>>(content);
+            return JsonSerializer.Deserialize<List<SubscriptionDto>>(content, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {
@@ -51,7 +51,7 @@ public class SubscriptionApiClient
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<SubscriptionDto>(content);
+            return JsonSerializer.Deserialize<SubscriptionDto>(content, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {
@@ -77,7 +77,7 @@ public class SubscriptionApiClient
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<SubscriptionDto>(responseContent);
+            return JsonSerializer.Deserialize<SubscriptionDto>(responseContent, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {
@@ -114,7 +114,7 @@ public class SubscriptionApiClient
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<SubscriptionDto>(responseContent);
+            return JsonSerializer.Deserialize<SubscriptionDto>(responseContent, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {

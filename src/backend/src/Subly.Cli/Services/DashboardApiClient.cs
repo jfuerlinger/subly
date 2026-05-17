@@ -24,7 +24,7 @@ public class DashboardApiClient
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<DashboardSummaryDto>(content);
+            return JsonSerializer.Deserialize<DashboardSummaryDto>(content, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {

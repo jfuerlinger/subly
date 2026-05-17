@@ -24,7 +24,7 @@ public class CategoryApiClient
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<CategoryDto>>(content);
+            return JsonSerializer.Deserialize<List<CategoryDto>>(content, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {
@@ -50,7 +50,7 @@ public class CategoryApiClient
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<CategoryDto>(responseContent);
+            return JsonSerializer.Deserialize<CategoryDto>(responseContent, JsonSerializerOptionsProvider.Web);
         }
         catch (Exception ex)
         {
