@@ -15,16 +15,8 @@ public sealed class AdminService(ISubscriptionRepository subscriptionRepository,
     public async Task SeedDataAsync(CancellationToken cancellationToken = default)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            await subscriptionRepository.DeleteAllAsync(cancellationToken);
-            await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        await subscriptionRepository.DeleteAllAsync(cancellationToken);
+        await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 }
