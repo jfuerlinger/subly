@@ -227,7 +227,7 @@ export function getPaymentDatesInRange(
     const startYear = Math.min(startedAt.getFullYear(), rangeStart.getFullYear()) - 1
     const endYear = rangeEnd.getFullYear() + 1
     for (let year = startYear; year <= endYear; year++) {
-      const candidate = new Date(year, nextPayment.getMonth(), nextPayment.getDate())
+      const candidate = paymentDateInMonth(nextPayment, new Date(year, nextPayment.getMonth(), 1))
       if (
         candidate >= rangeStart &&
         candidate <= rangeEnd &&
