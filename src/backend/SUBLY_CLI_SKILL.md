@@ -243,7 +243,7 @@ Exit codes:
 
 ### API Integration
 - All CLI commands make HTTP requests to the Subly API
-- The CLI uses the same DTOs and contracts as the API
+- The CLI maps API request and response payloads for its commands, with CLI contract models kept aligned to the API where practical
 - No caching or local storage; all data is live from the API
 
 ### Available Endpoints Mapped to Verbs
