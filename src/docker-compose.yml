@@ -34,6 +34,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    environment:
+      # Backend-Basis-URL für das Frontend-Proxying (ohne /api-Suffix)
+      BACKEND_URL: ${FRONTEND_BACKEND_URL:-http://backend:8080}
     depends_on:
       - backend
     ports:

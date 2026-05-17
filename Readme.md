@@ -128,6 +128,8 @@ cd .\src
 docker compose up --build
 ```
 
+Die Backend-URL für das Frontend-Proxying ist über `FRONTEND_BACKEND_URL` konfigurierbar (Standard: `http://backend:8080`, ohne `/api`-Suffix).
+
 Danach ist das Frontend unter `http://localhost:4173` erreichbar und die API über den Frontend-Proxy unter `/api`.
 
 Stoppen:
@@ -166,7 +168,7 @@ Tags: `latest` (master), semantische Version (z. B. `1.2.3`, `1.2`), und Git-SHA
    ```powershell
    cd .\src
    Copy-Item .env.deploy.example .env.deploy
-   # .env.deploy öffnen und DOCKERHUB_USERNAME, POSTGRES_PASSWORD etc. befüllen
+   # .env.deploy öffnen und DOCKERHUB_USERNAME, POSTGRES_PASSWORD, FRONTEND_BACKEND_URL etc. befüllen
    ```
 
 2. Container starten:
@@ -175,6 +177,8 @@ Tags: `latest` (master), semantische Version (z. B. `1.2.3`, `1.2`), und Git-SHA
    cd .\src
    docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d
    ```
+
+Das Frontend nutzt `FRONTEND_BACKEND_URL` aus der `.env.deploy` als Backend-Ziel für den `/api`-Proxy (Standard: `http://backend:8080`).
 
 Danach ist das Frontend unter `http://localhost:4173` erreichbar.
 

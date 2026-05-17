@@ -1,7 +1,8 @@
 # Docker Compose Deployment-Konfiguration
 #
 # Verwendet vorgefertigte Images von DockerHub.
-# Vor dem ersten Start: .env.deploy.example nach .env.deploy kopieren und befüllen.
+# Vor dem ersten Start: .env.deploy.example nach .env.deploy kopieren und befüllen
+# (inkl. FRONTEND_BACKEND_URL für die Backend-URL des Frontends).
 #
 # Starten:
 #   docker compose -f docker-compose.deploy.yml --env-file .env.deploy up -d
@@ -40,6 +41,9 @@ services:
   frontend:
     image: ${DOCKERHUB_USERNAME:?Bitte DOCKERHUB_USERNAME in .env.deploy setzen}/subly-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    environment:
+      # Backend-Basis-URL für das Frontend-Proxying (ohne /api-Suffix)
+      BACKEND_URL: ${FRONTEND_BACKEND_URL:-http://backend:8080}
     depends_on:
       - backend
     ports:
