@@ -17,13 +17,13 @@ Die App bietet ein Dashboard mit Kennzahlen (monatlich/jährlich/anstehende Zahl
 
 ```mermaid
 flowchart LR
-    Browser[Browser] --> Frontend[Vue SPA (Vite)]
+    Browser[Browser] --> Frontend["Vue SPA (Vite)"]
     Frontend -->|REST /api| Api[Subly.Api]
-    Api --> Application[Subly.Application<br/>SubscriptionService]
+    Api --> Application["Subly.Application<br/>SubscriptionService"]
     Application --> Repository[ISubscriptionRepository]
-    Repository --> Infrastructure[Subly.Infrastructure<br/>EfSubscriptionRepository]
+    Repository --> Infrastructure["Subly.Infrastructure<br/>EfSubscriptionRepository"]
     Infrastructure --> Db[(PostgreSQL)]
-    AppHost[Subly.AppHost (Aspire)] -. startet/verdrahtet .-> Frontend
+    AppHost["Subly.AppHost (Aspire)"] -. startet/verdrahtet .-> Frontend
     AppHost -. startet/verdrahtet .-> Api
     AppHost -. startet/verdrahtet .-> Db
 ```
