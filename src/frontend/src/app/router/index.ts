@@ -16,6 +16,11 @@ const routes = [
     component: () => import('../../views/SubscriptionsView.vue'),
   },
   {
+    path: '/calendar',
+    name: 'calendar',
+    component: () => import('../../views/CalendarView.vue'),
+  },
+  {
     path: '/analytics',
     name: 'analytics',
     component: () => import('../../views/AnalyticsView.vue'),
