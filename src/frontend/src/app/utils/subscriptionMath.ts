@@ -129,14 +129,15 @@ export function buildPaymentForecast(
         // Yearly subscriptions pay only when the annual date falls in this month.
         const next = toDate(s.nextPaymentDate)
         const nextPlusYear = new Date(next.getFullYear() + 1, next.getMonth(), next.getDate())
-        const hasYearlyPayment =
-          (next >= monthStart && next <= monthEnd) ||
-          (nextPlusYear >= monthStart && nextPlusYear <= monthEnd)
+        let paymentDate: Date | null = null
 
-        if (
-          hasYearlyPayment &&
-          (!cancelledAt || next <= cancelledAt || nextPlusYear <= cancelledAt)
-        ) {
+        if (next >= monthStart && next <= monthEnd) {
+          paymentDate = next
+        } else if (nextPlusYear >= monthStart && nextPlusYear <= monthEnd) {
+          paymentDate = nextPlusYear
+        }
+
+        if (paymentDate && (!cancelledAt || paymentDate <= cancelledAt)) {
           total += s.price
         }
       }
