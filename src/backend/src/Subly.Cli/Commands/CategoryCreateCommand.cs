@@ -13,6 +13,9 @@ public class CategoryCreateCommand
     [Option('u', "api-url", Default = "http://localhost:5000", HelpText = "Base URL for the Subly API")]
     public string ApiUrl { get; set; } = string.Empty;
 
+    [Option('t', "token", HelpText = "JWT access token")]
+    public string? Token { get; set; }
+
     public async Task<int> Execute()
     {
         try
@@ -25,7 +28,7 @@ public class CategoryCreateCommand
 
             var request = new CreateCategoryRequest(Name);
 
-            using var httpClient = new HttpClient { BaseAddress = new Uri(ApiUrl) };
+            using var httpClient = CliHttpClientFactory.Create(ApiUrl, Token);
             var client = new CategoryApiClient(httpClient);
 
             var category = await client.CreateAsync(request);

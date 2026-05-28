@@ -9,11 +9,14 @@ public class CategoryListCommand
     [Option('u', "api-url", Default = "http://localhost:5000", HelpText = "Base URL for the Subly API")]
     public string ApiUrl { get; set; } = string.Empty;
 
+    [Option('t', "token", HelpText = "JWT access token")]
+    public string? Token { get; set; }
+
     public async Task<int> Execute()
     {
         try
         {
-            using var httpClient = new HttpClient { BaseAddress = new Uri(ApiUrl) };
+            using var httpClient = CliHttpClientFactory.Create(ApiUrl, Token);
             var client = new CategoryApiClient(httpClient);
 
             var categories = await client.GetAllAsync();

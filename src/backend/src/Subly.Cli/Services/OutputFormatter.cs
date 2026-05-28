@@ -86,6 +86,16 @@ public static class OutputFormatter
         Console.WriteLine();
     }
 
+    public static void PrintAuthResponse(AuthResponseDto response)
+    {
+        Console.WriteLine("\n=== Authentication ===");
+        Console.WriteLine($"User:            {response.User.FirstName} {response.User.LastName}");
+        Console.WriteLine($"Email:           {response.User.Email}");
+        Console.WriteLine($"Expires (UTC):   {response.ExpiresAtUtc:O}");
+        Console.WriteLine($"Access Token:    {response.AccessToken}");
+        Console.WriteLine();
+    }
+
     private static void PrintTableHeader(params (string, int)[] columns)
     {
         Console.WriteLine();

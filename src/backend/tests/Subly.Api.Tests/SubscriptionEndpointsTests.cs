@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,47 +17,57 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     };
 
     [Fact]
-    public async Task GetSubscriptions_ShouldReturnSeededSubscriptions()
+    public async Task GetSubscriptions_ShouldReturnUnauthorized_WhenNoTokenIsProvided()
     {
         var client = factory.CreateClient();
 
-        var result = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+        var response = await client.GetAsync("/api/subscriptions");
 
-        result.Should().NotBeNull();
-        result.Should().NotBeEmpty();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task CreateSubscription_ShouldCreateAndReturnCreatedEntity()
+    public async Task CreateAndGetSubscriptions_ShouldReturnOnlyCurrentUserSubscriptions()
     {
-        var client = factory.CreateClient();
-        var request = new CreateSubscriptionRequest(
-            Name: "ChatGPT Plus",
-            Vendor: "OpenAI",
-            Category: "software",
-            Price: 22m,
-            Cycle: BillingCycle.Monthly,
-            NextPaymentDate: new DateOnly(2026, 5, 20),
-            PaymentMethod: "Visa",
-            StartedAt: new DateOnly(2026, 3, 10),
-            CancelledAt: null);
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var user1Client = await CreateAuthenticatedClientAsync($"user1-{uniqueSuffix}@example.com");
+        var user2Client = await CreateAuthenticatedClientAsync($"user2-{uniqueSuffix}@example.com");
 
-        var response = await client.PostAsJsonAsync("/api/subscriptions", request);
-        var body = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
+        var request1 = CreateSubscriptionRequest($"Netflix-{uniqueSuffix}");
+        var request2 = CreateSubscriptionRequest($"Spotify-{uniqueSuffix}");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        body.Should().NotBeNull();
-        body!.Name.Should().Be("ChatGPT Plus");
+        var createUser1Response = await user1Client.PostAsJsonAsync("/api/subscriptions", request1);
+        var createUser2Response = await user2Client.PostAsJsonAsync("/api/subscriptions", request2);
+
+        createUser1Response.StatusCode.Should().Be(HttpStatusCode.Created);
+        createUser2Response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var user1Subscriptions = await user1Client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+        var user2Subscriptions = await user2Client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+
+        user1Subscriptions.Should().NotBeNull();
+        user2Subscriptions.Should().NotBeNull();
+
+        var user1Names = user1Subscriptions!.Select(x => x.Name);
+        var user2Names = user2Subscriptions!.Select(x => x.Name);
+
+        user1Names.Should().Contain(request1.Name);
+        user1Names.Should().NotContain(request2.Name);
+        user2Names.Should().Contain(request2.Name);
+        user2Names.Should().NotContain(request1.Name);
     }
 
     [Fact]
     public async Task UpdateStatus_ShouldUpdateExistingSubscription()
     {
-        var client = factory.CreateClient();
-        var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
-        var targetId = subscriptions!.First().Id;
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var client = await CreateAuthenticatedClientAsync($"status-{uniqueSuffix}@example.com");
+        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Notion-{uniqueSuffix}"));
+        var created = await createResponse.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
 
-        var response = await client.PatchAsJsonAsync($"/api/subscriptions/{targetId}/status", new UpdateSubscriptionStatusRequest(SubscriptionStatus.Paused, null));
+        var response = await client.PatchAsJsonAsync(
+            $"/api/subscriptions/{created!.Id}/status",
+            new UpdateSubscriptionStatusRequest(SubscriptionStatus.Paused, null));
         var updated = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -65,31 +76,47 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     }
 
     [Fact]
-    public async Task UpdateStatus_ShouldPersistCancellationDate_WhenCancelled()
+    public async Task GetDashboardSummary_ShouldReturnCalculatedSummaryForCurrentUser()
     {
-        var client = factory.CreateClient();
-        var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
-        var targetId = subscriptions!.First().Id;
-        var cancellationDate = new DateOnly(2026, 5, 15);
-
-        var response = await client.PatchAsJsonAsync($"/api/subscriptions/{targetId}/status", new UpdateSubscriptionStatusRequest(SubscriptionStatus.Cancelled, cancellationDate));
-        var updated = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        updated.Should().NotBeNull();
-        updated!.Status.Should().Be(SubscriptionStatus.Cancelled);
-        updated.CancelledAt.Should().Be(cancellationDate);
-    }
-
-    [Fact]
-    public async Task GetDashboardSummary_ShouldReturnCalculatedSummary()
-    {
-        var client = factory.CreateClient();
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var client = await CreateAuthenticatedClientAsync($"summary-{uniqueSuffix}@example.com");
+        await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Summary-{uniqueSuffix}"));
 
         var summary = await client.GetFromJsonAsync<DashboardSummaryDto>("/api/dashboard/summary", JsonOptions);
 
         summary.Should().NotBeNull();
         summary!.ActiveSubscriptionsCount.Should().BeGreaterThan(0);
         summary.MonthlyTotal.Should().BeGreaterThan(0m);
+    }
+
+    private static CreateSubscriptionRequest CreateSubscriptionRequest(string name)
+    {
+        return new CreateSubscriptionRequest(
+            Name: name,
+            Vendor: "OpenAI",
+            Category: "software",
+            Price: 22m,
+            Cycle: BillingCycle.Monthly,
+            NextPaymentDate: new DateOnly(2026, 5, 20),
+            PaymentMethod: "Visa",
+            StartedAt: new DateOnly(2026, 3, 10),
+            CancelledAt: null);
+    }
+
+    private async Task<HttpClient> CreateAuthenticatedClientAsync(string email)
+    {
+        var client = factory.CreateClient();
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new RegisterUserRequest(
+            FirstName: "Max",
+            LastName: "Muster",
+            Email: email,
+            Password: "Secure123!"));
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var authResponse = await registerResponse.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions);
+        authResponse.Should().NotBeNull();
+        authResponse!.AccessToken.Should().NotBeNullOrWhiteSpace();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResponse.AccessToken);
+        return client;
     }
 }

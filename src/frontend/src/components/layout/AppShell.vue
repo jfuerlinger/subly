@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../app/stores/authStore'
+
 interface NavItem {
   to: string
   label: string
@@ -17,6 +21,30 @@ const overviewNav: NavItem[] = [
 const systemNav: NavItem[] = [
   { to: '/settings', label: 'Einstellungen', icon: 'settings' },
 ]
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const displayName = computed(() => {
+  if (!authStore.user) {
+    return 'Gast'
+  }
+
+  return `${authStore.user.firstName} ${authStore.user.lastName}`.trim()
+})
+
+const userInitials = computed(() => {
+  if (!authStore.user) {
+    return 'GU'
+  }
+
+  return `${authStore.user.firstName[0] ?? ''}${authStore.user.lastName[0] ?? ''}`.toUpperCase()
+})
+
+function logout() {
+  authStore.logout()
+  void router.push({ name: 'auth' })
+}
 </script>
 
 <template>
@@ -106,16 +134,14 @@ const systemNav: NavItem[] = [
       </div>
 
       <!-- User -->
-      <RouterLink to="/profile" class="sidebar-user" active-class="sidebar-user--active">
-        <div class="sidebar-user-avatar">MW</div>
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">{{ userInitials }}</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Maximilian W.</div>
+          <div class="sidebar-user-name">{{ displayName }}</div>
           <div class="sidebar-user-plan">Free Plan</div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </RouterLink>
+        <button class="sidebar-promo-btn" type="button" @click="logout">Abmelden</button>
+      </div>
     </aside>
 
     <main class="content">

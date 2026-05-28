@@ -12,6 +12,7 @@ internal sealed class SubscriptionEntityConfiguration : IEntityTypeConfiguration
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        builder.Property(x => x.UserId).IsRequired();
         builder.Property(x => x.Vendor).HasMaxLength(120).IsRequired();
         builder.Property(x => x.Category).HasMaxLength(40).IsRequired();
         builder.Property(x => x.PaymentMethod).HasMaxLength(120).IsRequired();
@@ -24,8 +25,14 @@ internal sealed class SubscriptionEntityConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.NextPaymentDate).IsRequired();
 
         builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.NextPaymentDate);
         builder.HasIndex(x => x.CancelledAt);
         builder.HasIndex(x => x.Category);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

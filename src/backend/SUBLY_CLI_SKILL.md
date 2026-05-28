@@ -43,6 +43,42 @@ By default, the CLI connects to `http://localhost:5000`. To use a different API 
 
 All commands support the `--api-url` option to override the default API endpoint.
 
+For protected endpoints, pass a bearer token:
+
+```bash
+--token <jwt-access-token>
+# or
+-t <jwt-access-token>
+```
+
+---
+
+## Authentication Commands
+
+### Register User
+
+Registers a user and returns an access token that can be used with all protected verbs.
+
+```bash
+dotnet run --project src/Subly.Cli -- auth-register \
+  --first-name "Max" \
+  --last-name "Muster" \
+  --email "max@example.com" \
+  --password "Secure123!"
+```
+
+---
+
+### Login User
+
+Logs in an existing user and returns a new access token.
+
+```bash
+dotnet run --project src/Subly.Cli -- auth-login \
+  --email "max@example.com" \
+  --password "Secure123!"
+```
+
 ---
 
 ## Subscription Commands
@@ -52,7 +88,7 @@ All commands support the `--api-url` option to override the default API endpoint
 List all active subscriptions.
 
 ```bash
-dotnet run --project src/Subly.Cli -- subscription-list
+dotnet run --project src/Subly.Cli -- subscription-list --token "<token>"
 dotnet run --project src/Subly.Cli -- subscription-list --api-url http://api.example.com
 ```
 
@@ -65,7 +101,7 @@ dotnet run --project src/Subly.Cli -- subscription-list --api-url http://api.exa
 Retrieve detailed information about a specific subscription.
 
 ```bash
-dotnet run --project src/Subly.Cli -- subscription-get <subscription-id>
+dotnet run --project src/Subly.Cli -- subscription-get <subscription-id> --token "<token>"
 ```
 
 **Example:**
@@ -90,7 +126,8 @@ dotnet run --project src/Subly.Cli -- subscription-create \
   --cycle "monthly" \
   --next-payment "2026-06-17" \
   --payment-method "credit_card" \
-  --started "2024-01-01"
+  --started "2024-01-01" \
+  --token "<token>"
 ```
 
 **Options:**
@@ -112,7 +149,8 @@ Change the status of an active subscription.
 
 ```bash
 dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-id> \
-  --status "paused"
+  --status "paused" \
+  --token "<token>"
 ```
 
 **Valid Statuses:**
@@ -131,7 +169,7 @@ dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-i
 Remove a subscription from the system. By default, this prompts for confirmation.
 
 ```bash
-dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id>
+dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id> --token "<token>"
 ```
 
 **Example (with confirmation):**
@@ -152,7 +190,7 @@ dotnet run --project src/Subly.Cli -- subscription-delete 550e8400-e29b-41d4-a71
 Retrieve subscription dashboard statistics including active subscription count, monthly/yearly totals, and upcoming payment metrics.
 
 ```bash
-dotnet run --project src/Subly.Cli -- dashboard-summary
+dotnet run --project src/Subly.Cli -- dashboard-summary --token "<token>"
 ```
 
 **Output:**
@@ -170,7 +208,7 @@ dotnet run --project src/Subly.Cli -- dashboard-summary
 List all available subscription categories.
 
 ```bash
-dotnet run --project src/Subly.Cli -- category-list
+dotnet run --project src/Subly.Cli -- category-list --token "<token>"
 ```
 
 **Output:** Formatted table with ID and Name.
@@ -182,7 +220,7 @@ dotnet run --project src/Subly.Cli -- category-list
 Create a new custom subscription category.
 
 ```bash
-dotnet run --project src/Subly.Cli -- category-create --name "Education"
+dotnet run --project src/Subly.Cli -- category-create --name "Education" --token "<token>"
 ```
 
 **Options:**
@@ -195,10 +233,17 @@ dotnet run --project src/Subly.Cli -- category-create --name "Education"
 ### Complete Workflow
 
 ```bash
-# 1. List all categories to see available options
-dotnet run --project src/Subly.Cli -- category-list
+# 1. Register and copy the access token from output
+dotnet run --project src/Subly.Cli -- auth-register \
+  --first-name "Max" \
+  --last-name "Muster" \
+  --email "max@example.com" \
+  --password "Secure123!"
 
-# 2. Create a new subscription
+# 2. List all categories to see available options
+dotnet run --project src/Subly.Cli -- category-list --token "<token>"
+
+# 3. Create a new subscription
 dotnet run --project src/Subly.Cli -- subscription-create \
   --name "GitHub Copilot" \
   --vendor "GitHub" \
@@ -207,19 +252,20 @@ dotnet run --project src/Subly.Cli -- subscription-create \
   --cycle "monthly" \
   --next-payment "2026-06-17" \
   --payment-method "credit_card" \
-  --started "2024-06-17"
+  --started "2024-06-17" \
+  --token "<token>"
 
-# 3. View the dashboard summary
-dotnet run --project src/Subly.Cli -- dashboard-summary
+# 4. View the dashboard summary
+dotnet run --project src/Subly.Cli -- dashboard-summary --token "<token>"
 
-# 4. List all subscriptions
-dotnet run --project src/Subly.Cli -- subscription-list
+# 5. List all subscriptions
+dotnet run --project src/Subly.Cli -- subscription-list --token "<token>"
 
-# 5. Update subscription status
-dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-id> --status "paused"
+# 6. Update subscription status
+dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-id> --status "paused" --token "<token>"
 
-# 6. Delete a subscription
-dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id> --yes
+# 7. Delete a subscription
+dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id> --yes --token "<token>"
 ```
 
 ---
@@ -250,6 +296,8 @@ Exit codes:
 
 | Endpoint | CLI Verb |
 |----------|----------|
+| POST /api/auth/register | auth-register |
+| POST /api/auth/login | auth-login |
 | GET /api/subscriptions | subscription-list |
 | GET /api/subscriptions/{id} | subscription-get |
 | POST /api/subscriptions | subscription-create |
