@@ -1,6 +1,5 @@
 using Subly.Domain.Models;
 using Subly.Infrastructure.Persistence;
-using System.Security.Cryptography;
 
 namespace Subly.Infrastructure.Seeding;
 
@@ -9,7 +8,9 @@ public static class SublyDataSeeder
     private const string DemoUserFirstName = "Max";
     private const string DemoUserLastName = "Muster";
     private const string DemoUserEmail = "demo@subly.local";
-    private const string DemoUserPassword = "SublyDemo123!";
+    private const string DemoUserPasswordHashBase64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    private const string DemoUserPasswordSaltBase64 = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=";
+    private const int DemoUserPasswordIterations = 100_000;
 
     private static readonly string[] DefaultCategories =
     [
@@ -27,6 +28,12 @@ public static class SublyDataSeeder
     public static async Task SeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
     {
         await SeedCategoriesAsync(dbContext, cancellationToken);
+        if (dbContext.Subscriptions.Any())
+        {
+            return;
+        }
+
+        await ForceSeedAsync(dbContext, cancellationToken);
     }
 
     public static async Task ForceSeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
@@ -72,27 +79,17 @@ public static class SublyDataSeeder
             return existingUser;
         }
 
-        var passwordHash = HashPassword(DemoUserPassword);
         var user = User.Create(
             DemoUserFirstName,
             DemoUserLastName,
             normalizedEmail,
-            passwordHash.Hash,
-            passwordHash.Salt,
-            passwordHash.Iterations);
+            DemoUserPasswordHashBase64,
+            DemoUserPasswordSaltBase64,
+            DemoUserPasswordIterations);
 
         await dbContext.Users.AddAsync(user, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return user;
-    }
-
-    private static (string Hash, string Salt, int Iterations) HashPassword(string password)
-    {
-        const int iterationCount = 100_000;
-        var salt = RandomNumberGenerator.GetBytes(32);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterationCount, HashAlgorithmName.SHA256, 32);
-
-        return (Convert.ToBase64String(hash), Convert.ToBase64String(salt), iterationCount);
     }
 }

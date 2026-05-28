@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { getAccessToken } from '../auth/tokenStorage'
+import { hasValidAccessToken } from '../auth/tokenStorage'
 
 const routes = [
   {
@@ -40,6 +40,7 @@ const routes = [
     path: '/categories',
     name: 'categories',
     component: () => import('../../views/CategoriesView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',
@@ -61,7 +62,7 @@ export const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const authenticated = !!getAccessToken()
+  const authenticated = hasValidAccessToken()
   const requiresAuth = to.meta.requiresAuth === true
 
   if (requiresAuth && !authenticated) {

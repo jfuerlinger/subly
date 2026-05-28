@@ -22,8 +22,19 @@ internal sealed class PasswordHasher : IPasswordHasher
 
     public bool Verify(string password, PasswordHashResult hashedPassword)
     {
-        var salt = Convert.FromBase64String(hashedPassword.SaltBase64);
-        var expectedHash = Convert.FromBase64String(hashedPassword.HashBase64);
+        byte[] salt;
+        byte[] expectedHash;
+
+        try
+        {
+            salt = Convert.FromBase64String(hashedPassword.SaltBase64);
+            expectedHash = Convert.FromBase64String(hashedPassword.HashBase64);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
         var actualHash = Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,

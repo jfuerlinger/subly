@@ -13,12 +13,13 @@ public sealed class AuthServiceTests
     {
         var repository = new InMemoryUserRepository();
         var service = new AuthService(repository, new FakePasswordHasher(), new FakeTokenService());
+        var credential = $"Auth-{Guid.NewGuid():N}!";
 
         var result = await service.RegisterAsync(new RegisterUserRequest(
             FirstName: "Max",
             LastName: "Muster",
             Email: "Max@Example.com",
-            Password: "Secure123!"));
+            Password: credential));
 
         result.AccessToken.Should().Be("token-value");
         result.User.Email.Should().Be("max@example.com");
@@ -29,11 +30,13 @@ public sealed class AuthServiceTests
     public async Task LoginAsync_ShouldThrowUnauthorized_WhenPasswordDoesNotMatch()
     {
         var repository = new InMemoryUserRepository();
+        var validCredential = $"Auth-{Guid.NewGuid():N}!";
+        var wrongCredential = $"Mismatch-{Guid.NewGuid():N}!";
         repository.Items.Add(User.Create(
             firstName: "Max",
             lastName: "Muster",
             email: "max@example.com",
-            passwordHash: "hash-expected",
+            passwordHash: $"hash-{validCredential}",
             passwordSalt: "salt-value",
             passwordIterations: 100_000));
 
@@ -41,7 +44,7 @@ public sealed class AuthServiceTests
 
         var action = async () => await service.LoginAsync(new LoginUserRequest(
             Email: "max@example.com",
-            Password: "wrong-password"));
+            Password: wrongCredential));
 
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
     }

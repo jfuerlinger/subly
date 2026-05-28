@@ -5,20 +5,34 @@ import type { AuthenticatedUser, LoginRequest, RegisterRequest } from '../types/
 import { login, register } from '../api/authApi'
 import {
   clearAccessToken,
+  clearAccessTokenExpiry,
   clearStoredAuthenticatedUser,
   getAccessToken,
+  getAccessTokenExpiry,
   getStoredAuthenticatedUser,
+  hasValidAccessToken,
   setAccessToken,
+  setAccessTokenExpiry,
   setStoredAuthenticatedUser,
 } from '../auth/tokenStorage'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(getAccessToken())
+  const expiresAtUtc = ref<Date | null>(getAccessTokenExpiry())
   const user = ref<AuthenticatedUser | null>(getStoredAuthenticatedUser())
   const authError = ref<string | null>(null)
   const loading = ref(false)
 
-  const isAuthenticated = computed(() => !!accessToken.value)
+  if (!hasValidAccessToken()) {
+    accessToken.value = null
+    expiresAtUtc.value = null
+    user.value = null
+    clearStoredAuthenticatedUser()
+  }
+
+  const isAuthenticated = computed(
+    () => !!accessToken.value && !!expiresAtUtc.value && expiresAtUtc.value.getTime() > Date.now(),
+  )
 
   async function registerUser(request: RegisterRequest): Promise<void> {
     loading.value = true
@@ -26,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await register(request)
-      setSession(response.accessToken, response.user)
+      setSession(response.accessToken, response.expiresAtUtc, response.user)
     } catch (error) {
       authError.value = toErrorMessage(error, 'Registrierung fehlgeschlagen.')
     } finally {
@@ -40,7 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await login(request)
-      setSession(response.accessToken, response.user)
+      setSession(response.accessToken, response.expiresAtUtc, response.user)
     } catch (error) {
       authError.value = toErrorMessage(error, 'Anmeldung fehlgeschlagen.')
     } finally {
@@ -50,16 +64,27 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout(): void {
     accessToken.value = null
+    expiresAtUtc.value = null
     user.value = null
     authError.value = null
     clearAccessToken()
+    clearAccessTokenExpiry()
     clearStoredAuthenticatedUser()
   }
 
-  function setSession(token: string, authenticatedUser: AuthenticatedUser): void {
+  function setSession(token: string, expiresAt: string, authenticatedUser: AuthenticatedUser): void {
+    const parsedExpiresAt = new Date(expiresAt)
+    if (Number.isNaN(parsedExpiresAt.getTime())) {
+      authError.value = 'Ungültiges Ablaufdatum im Login-Token.'
+      logout()
+      return
+    }
+
     accessToken.value = token
+    expiresAtUtc.value = parsedExpiresAt
     user.value = authenticatedUser
     setAccessToken(token)
+    setAccessTokenExpiry(parsedExpiresAt.toISOString())
     setStoredAuthenticatedUser(authenticatedUser)
   }
 

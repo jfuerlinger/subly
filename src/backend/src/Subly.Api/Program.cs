@@ -9,6 +9,7 @@ using Subly.Application.Services;
 using Subly.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+const string developmentJwtSigningKey = "subly-development-only-jwt-signing-key-not-for-production";
 
 builder.AddServiceDefaults();
 
@@ -27,8 +28,19 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 
-var jwtSigningKey = builder.Configuration["Authentication:Jwt:SigningKey"]
-    ?? throw new InvalidOperationException("Missing configuration key 'Authentication:Jwt:SigningKey'.");
+var jwtSigningKey = builder.Configuration["Authentication:Jwt:SigningKey"];
+if (string.IsNullOrWhiteSpace(jwtSigningKey))
+{
+    if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
+    {
+        jwtSigningKey = developmentJwtSigningKey;
+        builder.Configuration["Authentication:Jwt:SigningKey"] = jwtSigningKey;
+    }
+    else
+    {
+        throw new InvalidOperationException("Missing configuration key 'Authentication:Jwt:SigningKey'.");
+    }
+}
 var jwtIssuer = builder.Configuration["Authentication:Jwt:Issuer"]
     ?? throw new InvalidOperationException("Missing configuration key 'Authentication:Jwt:Issuer'.");
 var jwtAudience = builder.Configuration["Authentication:Jwt:Audience"]

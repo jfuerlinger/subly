@@ -1,16 +1,53 @@
 const accessTokenKey = 'subly:auth:accessToken'
+const accessTokenExpiryKey = 'subly:auth:accessTokenExpiry'
 const authenticatedUserKey = 'subly:auth:user'
 
 export function getAccessToken(): string | null {
-  return window.localStorage.getItem(accessTokenKey)
+  return hasValidAccessToken() ? window.sessionStorage.getItem(accessTokenKey) : null
 }
 
 export function setAccessToken(token: string): void {
-  window.localStorage.setItem(accessTokenKey, token)
+  window.sessionStorage.setItem(accessTokenKey, token)
 }
 
 export function clearAccessToken(): void {
-  window.localStorage.removeItem(accessTokenKey)
+  window.sessionStorage.removeItem(accessTokenKey)
+}
+
+export function getAccessTokenExpiry(): Date | null {
+  const value = window.sessionStorage.getItem(accessTokenExpiryKey)
+  if (!value) {
+    return null
+  }
+
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+export function setAccessTokenExpiry(expiresAtUtc: string): void {
+  window.sessionStorage.setItem(accessTokenExpiryKey, expiresAtUtc)
+}
+
+export function clearAccessTokenExpiry(): void {
+  window.sessionStorage.removeItem(accessTokenExpiryKey)
+}
+
+export function hasValidAccessToken(): boolean {
+  const token = window.sessionStorage.getItem(accessTokenKey)
+  const expiresAt = getAccessTokenExpiry()
+  if (!token || !expiresAt) {
+    clearAccessToken()
+    clearAccessTokenExpiry()
+    return false
+  }
+
+  if (expiresAt.getTime() <= Date.now()) {
+    clearAccessToken()
+    clearAccessTokenExpiry()
+    return false
+  }
+
+  return true
 }
 
 export interface StoredAuthenticatedUser {

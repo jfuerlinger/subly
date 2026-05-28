@@ -8,12 +8,13 @@ describe('authStore', () => {
     setActivePinia(createPinia())
     vi.restoreAllMocks()
     window.localStorage.clear()
+    window.sessionStorage.clear()
   })
 
   it('logs in and persists token', async () => {
     vi.spyOn(authApi, 'login').mockResolvedValue({
       accessToken: 'jwt-token',
-      expiresAtUtc: '2026-05-28T12:00:00Z',
+      expiresAtUtc: '2099-05-28T12:00:00Z',
       user: {
         id: 'user-1',
         firstName: 'Max',
@@ -26,13 +27,13 @@ describe('authStore', () => {
     await store.loginUser({ email: 'max@example.com', password: 'Secure123!' })
 
     expect(store.isAuthenticated).toBe(true)
-    expect(window.localStorage.getItem('subly:auth:accessToken')).toBe('jwt-token')
+    expect(window.sessionStorage.getItem('subly:auth:accessToken')).toBe('jwt-token')
   })
 
   it('clears session on logout', async () => {
     vi.spyOn(authApi, 'register').mockResolvedValue({
       accessToken: 'jwt-token',
-      expiresAtUtc: '2026-05-28T12:00:00Z',
+      expiresAtUtc: '2099-05-28T12:00:00Z',
       user: {
         id: 'user-1',
         firstName: 'Max',
@@ -51,6 +52,6 @@ describe('authStore', () => {
     store.logout()
 
     expect(store.isAuthenticated).toBe(false)
-    expect(window.localStorage.getItem('subly:auth:accessToken')).toBeNull()
+    expect(window.sessionStorage.getItem('subly:auth:accessToken')).toBeNull()
   })
 })

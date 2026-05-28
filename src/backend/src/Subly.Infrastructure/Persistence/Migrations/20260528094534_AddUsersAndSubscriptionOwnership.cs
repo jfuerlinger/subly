@@ -40,8 +40,8 @@ namespace Subly.Infrastructure.Persistence.Migrations
                     "Legacy",
                     "User",
                     "legacy@subly.local",
-                    "legacy-seed-hash",
-                    "legacy-seed-salt",
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
                     100000,
                     new DateTimeOffset(2026, 5, 28, 0, 0, 0, TimeSpan.Zero)
                 });
