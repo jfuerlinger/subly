@@ -8,6 +8,7 @@ const baseSubscription: Subscription = {
   id: 'sub-1',
   name: 'Netflix',
   vendor: 'Netflix',
+  logoUrl: null,
   category: 'streaming',
   price: 17.99,
   cycle: 'monthly',
@@ -49,6 +50,7 @@ describe('subscriptionStore', () => {
     const request: NewSubscriptionRequest = {
       name: 'ChatGPT Plus',
       vendor: 'OpenAI',
+      logoUrl: null,
       category: 'software',
       price: 22,
       cycle: 'monthly',

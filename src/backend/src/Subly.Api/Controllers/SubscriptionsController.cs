@@ -19,6 +19,21 @@ public sealed class SubscriptionsController(ISubscriptionService service) : Cont
         return Ok(result);
     }
 
+    [HttpGet("logo-suggestions")]
+    [ProducesResponseType(typeof(IReadOnlyList<LogoSuggestionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<IReadOnlyList<LogoSuggestionDto>> GetLogoSuggestions([FromQuery] string name)
+    {
+        try
+        {
+            return Ok(service.GetLogoSuggestions(name));
+        }
+        catch (ArgumentException exception)
+        {
+            return ValidationProblem(detail: exception.Message);
+        }
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(SubscriptionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -6,6 +6,7 @@ export interface Subscription {
   id: string
   name: string
   vendor: string
+  logoUrl: string | null
   category: string
   price: number
   cycle: BillingCycle
@@ -20,6 +21,7 @@ export interface Subscription {
 export interface NewSubscriptionRequest {
   name: string
   vendor: string
+  logoUrl: string | null
   category: string
   price: number
   cycle: BillingCycle
@@ -35,4 +37,10 @@ export interface DashboardSummary {
   activeSubscriptionsCount: number
   upcomingPaymentsTotal30Days: number
   upcomingPaymentsCount30Days: number
+}
+
+export interface LogoSuggestion {
+  provider: string
+  domain: string
+  logoUrl: string
 }

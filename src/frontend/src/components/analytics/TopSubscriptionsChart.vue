@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import type { Subscription } from '../../app/types/subscription'
 import { formatCurrency } from '../../app/utils/formatting'
 import { toMonthlyAmount } from '../../app/utils/subscriptionMath'
+import SubscriptionLogo from '../subscriptions/SubscriptionLogo.vue'
 
 const props = defineProps<{ subscriptions: Subscription[] }>()
 
@@ -152,7 +153,10 @@ function updateTooltip(e: MouseEvent) {
         class="chart-tooltip"
         :style="{ left: `${tooltipX}px`, top: `${tooltipY}px` }"
       >
-        <strong>{{ rows[hoveredIndex].name }}</strong>
+        <strong class="top-chart-tooltip-title">
+          <SubscriptionLogo :name="rows[hoveredIndex].name" :logo-url="rows[hoveredIndex].logoUrl" :size="18" />
+          <span>{{ rows[hoveredIndex].name }}</span>
+        </strong>
         <span>{{ rows[hoveredIndex].vendor }} · {{ rows[hoveredIndex].category }}</span>
         <span>
           {{ formatCurrency(rows[hoveredIndex].monthly) }}/Mo.
@@ -178,5 +182,11 @@ function updateTooltip(e: MouseEvent) {
   flex-direction: column;
   gap: 0.1rem;
   white-space: nowrap;
+}
+
+.top-chart-tooltip-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 </style>

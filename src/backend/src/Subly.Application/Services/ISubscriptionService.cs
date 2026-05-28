@@ -16,4 +16,6 @@ public interface ISubscriptionService
     Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken cancellationToken = default);
+
+    IReadOnlyList<LogoSuggestionDto> GetLogoSuggestions(string name);
 }

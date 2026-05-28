@@ -57,16 +57,19 @@ public sealed class SubscriptionServiceTests
             NextPaymentDate: now.AddDays(3),
             PaymentMethod: "Visa",
             StartedAt: now.AddMonths(-2),
-            CancelledAt: null);
+            CancelledAt: null,
+            LogoUrl: "https://logo.clearbit.com/openai.com");
 
         var created = await service.CreateSubscriptionAsync(request);
         var stored = await repository.GetByIdAsync(created.Id, CurrentUserId);
 
         created.Name.Should().Be("ChatGPT Plus");
         created.Status.Should().Be(SubscriptionStatus.Active);
+        created.LogoUrl.Should().Be("https://logo.clearbit.com/openai.com");
         stored.Should().NotBeNull();
         stored!.StartedAt.Should().Be(now.AddMonths(-2));
         stored.UserId.Should().Be(CurrentUserId);
+        stored.LogoUrl.Should().Be("https://logo.clearbit.com/openai.com");
     }
 
     [Fact]
@@ -141,6 +144,22 @@ public sealed class SubscriptionServiceTests
 
         result.Select(x => x.Name).Should().ContainInOrder("Alpha", "Zeta");
         result.Should().OnlyContain(x => x.Name != "Beta");
+    }
+
+    [Fact]
+    public void GetLogoSuggestions_ShouldReturnKnownProviderSuggestions()
+    {
+        var service = new SubscriptionService(
+            new InMemorySubscriptionRepository(),
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(new DateOnly(2026, 5, 16)));
+
+        var suggestions = service.GetLogoSuggestions("Netflix");
+
+        suggestions.Should().NotBeEmpty();
+        suggestions.Should().Contain(x => x.Domain == "netflix.com");
+        suggestions.Should().OnlyContain(x => x.LogoUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
     }
 
     private sealed class FixedDateProvider(DateOnly today) : IDateProvider

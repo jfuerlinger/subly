@@ -12,4 +12,5 @@ public record SubscriptionDto(
     string Status,
     bool AutoRenew,
     DateOnly StartedAt,
-    DateOnly? CancelledAt);
+    DateOnly? CancelledAt,
+    string? LogoUrl = null);

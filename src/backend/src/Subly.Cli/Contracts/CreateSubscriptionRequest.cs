@@ -9,4 +9,5 @@ public record CreateSubscriptionRequest(
     DateOnly NextPaymentDate,
     string PaymentMethod,
     DateOnly StartedAt,
-    DateOnly? CancelledAt);
+    DateOnly? CancelledAt,
+    string? LogoUrl = null);

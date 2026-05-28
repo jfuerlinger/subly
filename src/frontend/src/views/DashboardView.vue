@@ -5,6 +5,7 @@ import { buildDashboardSummary } from '../app/utils/subscriptionMath'
 import SummaryCards from '../components/dashboard/SummaryCards.vue'
 import SubscriptionDonutChart from '../components/dashboard/SubscriptionDonutChart.vue'
 import SubscriptionModal from '../components/subscriptions/SubscriptionModal.vue'
+import SubscriptionLogo from '../components/subscriptions/SubscriptionLogo.vue'
 import { formatCurrency, formatDate } from '../app/utils/formatting'
 
 const store = useSubscriptionStore()
@@ -93,12 +94,15 @@ onMounted(async () => {
 
       <section class="card">
         <h2>Anstehende Zahlungen</h2>
-        <ul class="upcoming-list">
-          <li v-for="subscription in upcoming" :key="subscription.id">
-            <span>{{ subscription.name }}</span>
-            <span>{{ formatDate(subscription.nextPaymentDate) }}</span>
-            <span>{{ formatCurrency(subscription.price) }}</span>
-          </li>
+          <ul class="upcoming-list">
+            <li v-for="subscription in upcoming" :key="subscription.id">
+              <span class="upcoming-name">
+                <SubscriptionLogo :name="subscription.name" :logo-url="subscription.logoUrl" :size="20" />
+                <span>{{ subscription.name }}</span>
+              </span>
+              <span>{{ formatDate(subscription.nextPaymentDate) }}</span>
+              <span>{{ formatCurrency(subscription.price) }}</span>
+            </li>
         </ul>
         <p v-if="upcoming.length === 0" class="muted">Keine Zahlungen in den nächsten 30 Tagen.</p>
       </section>
@@ -118,6 +122,12 @@ onMounted(async () => {
   grid-template-columns: 320px 1fr;
   gap: 1rem;
   align-items: start;
+}
+
+.upcoming-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 @media (max-width: 900px) {

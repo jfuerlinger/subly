@@ -10,6 +10,30 @@ public sealed class SubscriptionService(
     ICurrentUserProvider currentUserProvider,
     IDateProvider dateProvider) : ISubscriptionService
 {
+    private static readonly IReadOnlyDictionary<string, string> KnownLogoDomains =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["netflix"] = "netflix.com",
+            ["spotify"] = "spotify.com",
+            ["disney"] = "disneyplus.com",
+            ["amazon"] = "amazon.com",
+            ["prime"] = "primevideo.com",
+            ["openai"] = "openai.com",
+            ["chatgpt"] = "openai.com",
+            ["github"] = "github.com",
+            ["notion"] = "notion.so",
+            ["adobe"] = "adobe.com",
+            ["microsoft"] = "microsoft.com",
+            ["google"] = "google.com",
+            ["youtube"] = "youtube.com",
+            ["apple"] = "apple.com",
+            ["dropbox"] = "dropbox.com",
+            ["slack"] = "slack.com",
+            ["zoom"] = "zoom.us",
+            ["canva"] = "canva.com",
+            ["figma"] = "figma.com",
+            ["deezer"] = "deezer.com",
+        };
 
     public async Task<IReadOnlyList<SubscriptionDto>> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
@@ -45,7 +69,8 @@ public sealed class SubscriptionService(
             request.PaymentMethod,
             request.StartedAt,
             request.CancelledAt,
-            initialStatus);
+            initialStatus,
+            logoUrl: request.LogoUrl);
 
         await repository.AddAsync(subscription, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -104,6 +129,28 @@ public sealed class SubscriptionService(
             UpcomingPaymentsCount30Days: upcoming.Length);
     }
 
+    public IReadOnlyList<LogoSuggestionDto> GetLogoSuggestions(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return [];
+        }
+
+        var normalizedName = NormalizeSubscriptionName(name);
+        if (string.IsNullOrWhiteSpace(normalizedName))
+        {
+            return [];
+        }
+
+        var domains = BuildDomainCandidates(normalizedName);
+
+        return domains
+            .SelectMany(BuildLogoSuggestionsForDomain)
+            .DistinctBy(x => x.LogoUrl, StringComparer.OrdinalIgnoreCase)
+            .Take(9)
+            .ToArray();
+    }
+
     private static decimal ToMonthlyValue(Subscription subscription)
     {
         return subscription.Cycle is BillingCycle.Yearly ? subscription.Price / 12m : subscription.Price;
@@ -128,7 +175,92 @@ public sealed class SubscriptionService(
             subscription.Status,
             subscription.AutoRenew,
             subscription.StartedAt,
-            subscription.CancelledAt);
+            subscription.CancelledAt,
+            subscription.LogoUrl);
+    }
+
+    private static string NormalizeSubscriptionName(string name)
+    {
+        var builder = new System.Text.StringBuilder(name.Length);
+        var previousWasSpace = false;
+
+        foreach (var character in name)
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                builder.Append(char.ToLowerInvariant(character));
+                previousWasSpace = false;
+                continue;
+            }
+
+            if (!previousWasSpace)
+            {
+                builder.Append(' ');
+                previousWasSpace = true;
+            }
+        }
+
+        return builder.ToString().Trim();
+    }
+
+    private static IEnumerable<string> BuildDomainCandidates(string normalizedName)
+    {
+        var candidates = new List<string>();
+        var compactName = normalizedName.Replace(" ", string.Empty, StringComparison.Ordinal);
+
+        AddKnownMappings(normalizedName, candidates);
+
+        if (!string.IsNullOrWhiteSpace(compactName) && compactName.Length >= 3)
+        {
+            candidates.Add($"{compactName}.com");
+        }
+
+        var words = normalizedName
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (words.Length > 0)
+        {
+            AddKnownMappings(words[0], candidates);
+
+            if (words[0].Length >= 3)
+            {
+                candidates.Add($"{words[0]}.com");
+            }
+        }
+
+        return candidates
+            .Where(IsValidDomain)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static IEnumerable<LogoSuggestionDto> BuildLogoSuggestionsForDomain(string domain)
+    {
+        yield return new LogoSuggestionDto("Clearbit", domain, $"https://logo.clearbit.com/{domain}");
+        yield return new LogoSuggestionDto("Google Favicon", domain, $"https://www.google.com/s2/favicons?domain={domain}&sz=128");
+        yield return new LogoSuggestionDto("DuckDuckGo Favicon", domain, $"https://icons.duckduckgo.com/ip3/{domain}.ico");
+    }
+
+    private static void AddKnownMappings(string key, ICollection<string> candidates)
+    {
+        if (KnownLogoDomains.TryGetValue(key, out var mappedDomain))
+        {
+            candidates.Add(mappedDomain);
+        }
+    }
+
+    private static bool IsValidDomain(string domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+        {
+            return false;
+        }
+
+        var dotIndex = domain.IndexOf('.');
+        if (dotIndex <= 0 || dotIndex == domain.Length - 1)
+        {
+            return false;
+        }
+
+        return domain.All(c => char.IsLetterOrDigit(c) || c is '.' or '-');
     }
 
     private async Task ValidateRequestAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken)

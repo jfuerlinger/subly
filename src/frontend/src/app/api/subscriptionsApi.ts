@@ -1,5 +1,11 @@
 import { apiClient } from './client'
-import type { DashboardSummary, NewSubscriptionRequest, Subscription, SubscriptionStatus } from '../types/subscription'
+import type {
+  DashboardSummary,
+  LogoSuggestion,
+  NewSubscriptionRequest,
+  Subscription,
+  SubscriptionStatus,
+} from '../types/subscription'
 
 export async function fetchSubscriptions(): Promise<Subscription[]> {
   const response = await apiClient.get<Subscription[]>('/subscriptions')
@@ -27,4 +33,11 @@ export async function updateSubscriptionStatus(
 
 export async function deleteSubscription(id: string): Promise<void> {
   await apiClient.delete(`/subscriptions/${id}`)
+}
+
+export async function fetchLogoSuggestions(name: string): Promise<LogoSuggestion[]> {
+  const response = await apiClient.get<LogoSuggestion[]>('/subscriptions/logo-suggestions', {
+    params: { name },
+  })
+  return response.data
 }
