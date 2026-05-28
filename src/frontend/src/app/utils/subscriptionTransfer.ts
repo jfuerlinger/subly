@@ -56,6 +56,14 @@ function extractSubscriptions(parsed: unknown): unknown {
   }
 
   if (isJsonRecord(parsed)) {
+    if (parsed.format !== exportFormat) {
+      throw new Error(`Ungültiges JSON-Format. Erwartet wird "${exportFormat}".`)
+    }
+
+    if (parsed.version !== exportVersion) {
+      throw new Error(`Ungültige JSON-Version. Unterstützt wird Version ${exportVersion}.`)
+    }
+
     return parsed.subscriptions
   }
 
@@ -100,7 +108,7 @@ function readPositiveNumber(value: unknown, field: string, index: number): numbe
 }
 
 function readDate(value: unknown, field: string, index: number): string {
-  if (typeof value !== 'string' || !isoDatePattern.test(value)) {
+  if (typeof value !== 'string' || !isValidIsoCalendarDate(value)) {
     throw new Error(`Feld "${field}" muss im Format YYYY-MM-DD sein (Eintrag ${index + 1}).`)
   }
 
@@ -143,4 +151,20 @@ function readStatus(
 
 function isJsonRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null
+}
+
+function isValidIsoCalendarDate(value: string): boolean {
+  if (!isoDatePattern.test(value)) {
+    return false
+  }
+
+  const [yearString, monthString, dayString] = value.split('-')
+  const year = Number(yearString)
+  const month = Number(monthString)
+  const day = Number(dayString)
+
+  const parsedDate = new Date(Date.UTC(year, month - 1, day))
+  return parsedDate.getUTCFullYear() === year
+    && parsedDate.getUTCMonth() === month - 1
+    && parsedDate.getUTCDate() === day
 }

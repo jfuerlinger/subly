@@ -76,4 +76,45 @@ describe('subscriptionTransfer', () => {
       'Feld "cycle" muss "monthly" oder "yearly" sein (Eintrag 1).',
     )
   })
+
+  it('throws on unsupported object payload format', () => {
+    const json = JSON.stringify({
+      format: 'other-format',
+      version: 1,
+      subscriptions: [sampleSubscription],
+    })
+
+    expect(() => parseSubscriptionImportPayload(json)).toThrow(
+      'Ungültiges JSON-Format. Erwartet wird "subly-subscriptions".',
+    )
+  })
+
+  it('throws on unsupported object payload version', () => {
+    const json = JSON.stringify({
+      format: 'subly-subscriptions',
+      version: 2,
+      subscriptions: [sampleSubscription],
+    })
+
+    expect(() => parseSubscriptionImportPayload(json)).toThrow(
+      'Ungültige JSON-Version. Unterstützt wird Version 1.',
+    )
+  })
+
+  it('throws on invalid calendar date values', () => {
+    const json = JSON.stringify({
+      format: 'subly-subscriptions',
+      version: 1,
+      subscriptions: [
+        {
+          ...sampleSubscription,
+          nextPaymentDate: '2026-99-99',
+        },
+      ],
+    })
+
+    expect(() => parseSubscriptionImportPayload(json)).toThrow(
+      'Feld "nextPaymentDate" muss im Format YYYY-MM-DD sein (Eintrag 1).',
+    )
+  })
 })

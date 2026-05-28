@@ -148,6 +148,14 @@ function resetImportSelection() {
   }
 }
 
+function triggerImportFilePicker() {
+  if (isImporting.value || !fileInput.value) {
+    return
+  }
+
+  fileInput.value.click()
+}
+
 function normalizeCategoryName(category: string): string {
   return category.trim().toLowerCase()
 }
@@ -181,24 +189,17 @@ async function handleImport(mode: ImportMode) {
     const categoriesToCreate = [...new Set(importSubscriptions.map((subscription) => normalizeCategoryName(subscription.category)))]
       .filter((categoryName) => !existingCategoryNames.has(categoryName))
     const statusUpdateCount = importSubscriptions.filter((subscription) => needsStatusUpdate(subscription)).length
+    const deleteExistingCount = mode === 'replace' ? existingSubscriptions.length : 0
     importProgressTotal.value =
       categoriesToCreate.length +
-      existingSubscriptions.length +
       importSubscriptions.length +
-      statusUpdateCount
+      statusUpdateCount +
+      deleteExistingCount
 
     for (const categoryName of categoriesToCreate) {
       importProgressStep.value = `Kategorie "${categoryName}" wird angelegt…`
       await createCategory(categoryName)
       importProgressCompleted.value += 1
-    }
-
-    if (mode === 'replace') {
-      for (const existingSubscription of existingSubscriptions) {
-        importProgressStep.value = `Bestehendes Abo "${existingSubscription.name}" wird gelöscht…`
-        await deleteSubscription(existingSubscription.id)
-        importProgressCompleted.value += 1
-      }
     }
 
     for (const subscription of importSubscriptions) {
@@ -223,6 +224,14 @@ async function handleImport(mode: ImportMode) {
           subscription.status,
           subscription.status === 'cancelled' ? subscription.cancelledAt : null,
         )
+        importProgressCompleted.value += 1
+      }
+    }
+
+    if (mode === 'replace') {
+      for (const existingSubscription of existingSubscriptions) {
+        importProgressStep.value = `Bestehendes Abo "${existingSubscription.name}" wird gelöscht…`
+        await deleteSubscription(existingSubscription.id)
         importProgressCompleted.value += 1
       }
     }
@@ -273,18 +282,20 @@ async function handleImport(mode: ImportMode) {
         <button class="btn btn--primary" :disabled="isExporting || isImporting" @click="handleExportSubscriptions">
           {{ isExporting ? 'Export läuft…' : 'Subscriptions exportieren' }}
         </button>
-        <label class="btn btn--ghost btn--file" :class="{ 'btn--disabled': isImporting }">
+        <button class="btn btn--ghost" type="button" :disabled="isImporting" @click="triggerImportFilePicker">
           JSON-Datei auswählen
-          <input
-            ref="fileInput"
-            class="sr-only-input"
-            type="file"
-            accept=".json,application/json"
-            :disabled="isImporting"
-            @change="handleImportFileSelected"
-          >
-        </label>
+        </button>
       </div>
+      <input
+        ref="fileInput"
+        class="file-input-hidden"
+        type="file"
+        accept=".json,application/json"
+        :disabled="isImporting"
+        tabindex="-1"
+        aria-hidden="true"
+        @change="handleImportFileSelected"
+      >
 
       <p v-if="pendingImportSubscriptions && importFileName" class="muted">
         Datei „{{ importFileName }}“ geladen ({{ pendingImportSubscriptions.length }} Abos).
@@ -352,6 +363,12 @@ async function handleImport(mode: ImportMode) {
             </header>
             <div class="modal-body">
               <p>Möchtest du bestehende Daten ersetzen oder mit den importierten Daten mergen?</p>
+              <p class="error-message">
+                Achtung: Beim Ersetzen werden bestehende Abos gelöscht.
+              </p>
+              <p class="muted">
+                Damit kein Datenverlust bei einem Import-Fehler entsteht, werden bestehende Abos erst nach erfolgreichem Import entfernt.
+              </p>
               <p class="muted" v-if="pendingImportSubscriptions && importFileName">
                 Datei: {{ importFileName }} ({{ pendingImportSubscriptions.length }} Abos)
               </p>
@@ -523,27 +540,8 @@ async function handleImport(mode: ImportMode) {
   margin: 0;
 }
 
-.btn--file {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn--disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.sr-only-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.file-input-hidden {
+  display: none;
 }
 
 .import-progress-panel {
