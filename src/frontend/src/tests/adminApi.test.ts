@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AxiosResponse } from 'axios'
 import { apiClient } from '../app/api/client'
-import { deleteAllData, seedData } from '../app/api/adminApi'
+import { deleteAllData, resetDatabase, seedData } from '../app/api/adminApi'
 
 describe('adminApi', () => {
   beforeEach(() => {
@@ -22,5 +22,18 @@ describe('adminApi', () => {
     await seedData()
 
     expect(apiClient.post).toHaveBeenCalledWith('/admin/seed')
+  })
+
+  it('resetDatabase calls POST /admin/reset-database', async () => {
+    vi.spyOn(apiClient, 'post').mockResolvedValue({
+      data: {
+        steps: [],
+        completedAtUtc: '2026-01-01T00:00:00Z',
+      },
+    } as AxiosResponse)
+
+    await resetDatabase()
+
+    expect(apiClient.post).toHaveBeenCalledWith('/admin/reset-database')
   })
 })
