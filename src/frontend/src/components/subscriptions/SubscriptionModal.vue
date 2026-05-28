@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import type { NewSubscriptionRequest } from '../../app/types/subscription'
 import SubscriptionForm from './SubscriptionForm.vue'
 
-const props = defineProps<{ show: boolean }>()
+const props = withDefaults(
+  defineProps<{
+    show: boolean
+    mode?: 'create' | 'edit'
+    initialValues?: NewSubscriptionRequest | null
+  }>(),
+  {
+    mode: 'create',
+    initialValues: null,
+  },
+)
 
 const emit = defineEmits<{
   close: []
   submit: [request: NewSubscriptionRequest]
 }>()
+
+const title = computed(() => (props.mode === 'edit' ? 'Abo bearbeiten' : 'Neues Abo hinzufügen'))
+const submitLabel = computed(() => (props.mode === 'edit' ? 'Änderungen speichern' : 'Abo hinzufügen'))
 
 function onSubmit(request: NewSubscriptionRequest) {
   emit('submit', request)
@@ -28,10 +41,10 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-backdrop" @click.self="emit('close')">
+      <div v-if="props.show" class="modal-backdrop" @click.self="emit('close')">
         <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <header class="modal-header">
-            <h2 id="modal-title" class="modal-title">Neues Abo hinzufügen</h2>
+            <h2 id="modal-title" class="modal-title">{{ title }}</h2>
             <button class="modal-close" type="button" :aria-label="'Schließen'" @click="emit('close')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"/>
@@ -41,7 +54,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           </header>
 
           <div class="modal-body">
-            <SubscriptionForm @submit="onSubmit" @cancel="emit('close')" />
+            <SubscriptionForm
+              :initial-values="props.initialValues"
+              :submit-label="submitLabel"
+              @submit="onSubmit"
+              @cancel="emit('close')"
+            />
           </div>
         </div>
       </div>

@@ -107,6 +107,69 @@ public sealed class SubscriptionServiceTests
     }
 
     [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldUpdateExistingSubscription()
+    {
+        var now = new DateOnly(2026, 5, 16);
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var repository = new InMemorySubscriptionRepository([existing]);
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
+
+        var request = new UpdateSubscriptionRequest(
+            Name: "Notion Plus",
+            Vendor: "Notion Labs",
+            Category: "software",
+            Price: 11.99m,
+            Cycle: BillingCycle.Yearly,
+            NextPaymentDate: now.AddMonths(1),
+            PaymentMethod: "Mastercard",
+            StartedAt: now.AddMonths(-12),
+            CancelledAt: null);
+
+        var updated = await service.UpdateSubscriptionAsync(existing.Id, request);
+
+        updated.Should().NotBeNull();
+        updated!.Name.Should().Be("Notion Plus");
+        updated.Vendor.Should().Be("Notion Labs");
+        updated.Cycle.Should().Be(BillingCycle.Yearly);
+        updated.Status.Should().Be(SubscriptionStatus.Active);
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionAsync_ShouldSetStatusToCancelled_WhenCancelledAtIsProvided()
+    {
+        var now = new DateOnly(2026, 5, 16);
+        var existing = Subscription.Create(CurrentUserId, "Linear", "Linear", "software", 9m, BillingCycle.Monthly, now.AddDays(2), "Visa", now.AddMonths(-10));
+        var repository = new InMemorySubscriptionRepository([existing]);
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
+
+        var cancelledAt = now.AddDays(1);
+        var request = new UpdateSubscriptionRequest(
+            Name: "Linear",
+            Vendor: "Linear",
+            Category: "software",
+            Price: 9m,
+            Cycle: BillingCycle.Monthly,
+            NextPaymentDate: now.AddDays(10),
+            PaymentMethod: "Visa",
+            StartedAt: now.AddMonths(-10),
+            CancelledAt: cancelledAt);
+
+        var updated = await service.UpdateSubscriptionAsync(existing.Id, request);
+
+        updated.Should().NotBeNull();
+        updated!.Status.Should().Be(SubscriptionStatus.Cancelled);
+        updated.CancelledAt.Should().Be(cancelledAt);
+    }
+
+    [Fact]
     public async Task DeleteSubscriptionAsync_ShouldRemoveExistingSubscription()
     {
         var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));

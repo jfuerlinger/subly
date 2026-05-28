@@ -5,6 +5,17 @@ import { createCategory, fetchCategories, type CategoryDto } from '../../app/api
 import { fetchLogoSuggestions } from '../../app/api/subscriptionsApi'
 import SubscriptionLogo from './SubscriptionLogo.vue'
 
+const props = withDefaults(
+  defineProps<{
+    initialValues?: NewSubscriptionRequest | null
+    submitLabel?: string
+  }>(),
+  {
+    initialValues: null,
+    submitLabel: 'Abo hinzufügen',
+  },
+)
+
 const emit = defineEmits<{
   submit: [request: NewSubscriptionRequest]
   cancel: []
@@ -34,22 +45,68 @@ function getLocalDateString(date = new Date()) {
 
 const today = getLocalDateString()
 
+function createDefaultForm(): NewSubscriptionRequest {
+  return {
+    name: '',
+    vendor: '',
+    logoUrl: null,
+    category: categories.value[0]?.name ?? '',
+    price: 0,
+    cycle: 'monthly',
+    nextPaymentDate: today,
+    paymentMethod: 'Visa',
+    startedAt: today,
+    cancelledAt: null,
+  }
+}
+
+function applyFormValues(values: NewSubscriptionRequest) {
+  form.name = values.name
+  form.vendor = values.vendor
+  form.logoUrl = values.logoUrl
+  form.category = values.category
+  form.price = values.price
+  form.cycle = values.cycle
+  form.nextPaymentDate = values.nextPaymentDate
+  form.paymentMethod = values.paymentMethod
+  form.startedAt = values.startedAt
+  form.cancelledAt = values.cancelledAt
+}
+
 onMounted(async () => {
   categories.value = await fetchCategories()
+  if (!form.category) {
+    form.category = categories.value[0]?.name ?? ''
+  }
 })
 
-const form = reactive<NewSubscriptionRequest>({
-  name: '',
-  vendor: '',
-  logoUrl: null,
-  category: '',
-  price: 0,
-  cycle: 'monthly',
-  nextPaymentDate: today,
-  paymentMethod: 'Visa',
-  startedAt: today,
-  cancelledAt: null,
-})
+const form = reactive<NewSubscriptionRequest>(createDefaultForm())
+
+watch(
+  () => props.initialValues,
+  (initialValues) => {
+    showNewCategoryInput.value = false
+    newCategoryName.value = ''
+    newCategoryError.value = ''
+    logoSuggestions.value = []
+    logoSuggestionsLoading.value = false
+    logoSuggestionsError.value = ''
+    fileUploadError.value = ''
+
+    if (initialValues) {
+      applyFormValues(initialValues)
+      selectedSuggestionLogoUrl.value = initialValues.logoUrl
+      return
+    }
+
+    applyFormValues(createDefaultForm())
+    selectedSuggestionLogoUrl.value = null
+    if (logoFileInput.value) {
+      logoFileInput.value.value = ''
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   () => form.name,
@@ -132,22 +189,17 @@ function onSubmit() {
     logoUrl: form.logoUrl?.trim() ? form.logoUrl.trim() : null,
     cancelledAt: form.cancelledAt ? form.cancelledAt : null,
   })
-  form.name = ''
-  form.vendor = ''
-  form.logoUrl = null
-  form.category = categories.value[0]?.name ?? ''
-  form.price = 0
-  form.cycle = 'monthly'
-  form.nextPaymentDate = today
-  form.paymentMethod = 'Visa'
-  form.startedAt = today
-  form.cancelledAt = null
+
   logoSuggestions.value = []
   logoSuggestionsError.value = ''
   fileUploadError.value = ''
   selectedSuggestionLogoUrl.value = null
   if (logoFileInput.value) {
     logoFileInput.value.value = ''
+  }
+
+  if (!props.initialValues) {
+    applyFormValues(createDefaultForm())
   }
 }
 
@@ -383,7 +435,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        Abo hinzufügen
+        {{ props.submitLabel }}
       </button>
     </div>
   </form>

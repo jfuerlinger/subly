@@ -78,6 +78,26 @@ public sealed class SubscriptionsController(ISubscriptionService service) : Cont
         }
     }
 
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(SubscriptionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SubscriptionDto>> Update(
+        Guid id,
+        [FromBody] UpdateSubscriptionRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await service.UpdateSubscriptionAsync(id, request, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (ArgumentException exception)
+        {
+            return ValidationProblem(detail: exception.Message);
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -137,6 +137,76 @@ public sealed class Subscription
         Status = status;
     }
 
+    public void UpdateDetails(
+        string name,
+        string vendor,
+        string category,
+        decimal price,
+        BillingCycle cycle,
+        DateOnly nextPaymentDate,
+        string paymentMethod,
+        DateOnly startedAt,
+        DateOnly? cancelledAt,
+        SubscriptionStatus status,
+        string? logoUrl = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        if (string.IsNullOrWhiteSpace(vendor))
+        {
+            throw new ArgumentException("Vendor is required.", nameof(vendor));
+        }
+
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            throw new ArgumentException("Category is required.", nameof(category));
+        }
+
+        if (price <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(price), "Price must be greater than zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            throw new ArgumentException("Payment method is required.", nameof(paymentMethod));
+        }
+
+        if (cancelledAt.HasValue && cancelledAt.Value < startedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cancelledAt), "Cancelled date cannot be earlier than start date.");
+        }
+
+        if (status is SubscriptionStatus.Cancelled && !cancelledAt.HasValue)
+        {
+            throw new ArgumentException("Cancelled date is required when status is cancelled.", nameof(cancelledAt));
+        }
+
+        if (status is not SubscriptionStatus.Cancelled && cancelledAt.HasValue)
+        {
+            throw new ArgumentException("Cancelled date can only be set when status is cancelled.", nameof(cancelledAt));
+        }
+
+        Name = name.Trim();
+        Vendor = vendor.Trim();
+        Category = category.Trim();
+        Price = price;
+        Cycle = cycle;
+        NextPaymentDate = nextPaymentDate;
+        PaymentMethod = paymentMethod.Trim();
+        StartedAt = startedAt;
+        CancelledAt = cancelledAt;
+        Status = status;
+
+        if (logoUrl is not null)
+        {
+            LogoUrl = NormalizeLogoUrl(logoUrl);
+        }
+    }
+
     private static string? NormalizeLogoUrl(string? logoUrl)
     {
         if (string.IsNullOrWhiteSpace(logoUrl))

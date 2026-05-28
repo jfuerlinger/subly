@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  edit: [subscription: Subscription]
   updateStatus: [id: string, status: SubscriptionStatus, cancelledAt?: string | null]
   remove: [id: string]
 }>()
@@ -271,6 +272,7 @@ const processedSubscriptions = computed(() => {
               <SubscriptionStatusBadge :status="subscription.status" />
             </td>
             <td class="actions">
+              <button type="button" @click="emit('edit', subscription)">Bearbeiten</button>
               <button
                 v-for="status in subscriptionStatusOptions"
                 :key="status.value"

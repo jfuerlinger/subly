@@ -181,6 +181,36 @@ dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-i
 
 ---
 
+### Update Subscription Details
+
+Update an existing subscription's core details.
+
+```bash
+dotnet run --project src/Subly.Cli -- subscription-update <subscription-id> \
+  --name "Netflix Premium" \
+  --vendor "Netflix Inc." \
+  --category "streaming" \
+  --price "17.99" \
+  --cycle "monthly" \
+  --next-payment "2026-06-17" \
+  --payment-method "credit_card" \
+  --started "2024-01-01" \
+  --token "<token>"
+```
+
+**Options:**
+- `--name` (required): Subscription name
+- `--vendor` (required): Vendor or service provider name
+- `--category` (required): Category name
+- `--price` (required): Subscription price in euros
+- `--cycle` (required): Billing cycle (monthly, yearly, quarterly)
+- `--next-payment` (required): Next payment date (format: yyyy-MM-dd)
+- `--payment-method` (required): Payment method
+- `--started` (required): Subscription start date (format: yyyy-MM-dd)
+- `--cancelled` (optional): Cancellation date (format: yyyy-MM-dd)
+
+---
+
 ### Delete Subscription
 
 Remove a subscription from the system. By default, this prompts for confirmation.
@@ -311,10 +341,22 @@ dotnet run --project src/Subly.Cli -- dashboard-summary --token "<token>"
 # 5. List all subscriptions
 dotnet run --project src/Subly.Cli -- subscription-list --token "<token>"
 
-# 6. Update subscription status
+# 6. Update subscription details
+dotnet run --project src/Subly.Cli -- subscription-update <subscription-id> \
+  --name "GitHub Copilot Team" \
+  --vendor "GitHub" \
+  --category "software" \
+  --price "21" \
+  --cycle "monthly" \
+  --next-payment "2026-07-17" \
+  --payment-method "credit_card" \
+  --started "2024-06-17" \
+  --token "<token>"
+
+# 7. Update subscription status
 dotnet run --project src/Subly.Cli -- subscription-update-status <subscription-id> --status "paused" --token "<token>"
 
-# 7. Delete a subscription
+# 8. Delete a subscription
 dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id> --yes --token "<token>"
 ```
 
@@ -352,6 +394,7 @@ Exit codes:
 | GET /api/subscriptions/{id} | subscription-get |
 | POST /api/subscriptions | subscription-create |
 | GET /api/subscriptions/logo-suggestions | subscription-suggest-logos |
+| PUT /api/subscriptions/{id} | subscription-update |
 | PATCH /api/subscriptions/{id}/status | subscription-update-status |
 | DELETE /api/subscriptions/{id} | subscription-delete |
 | GET /api/dashboard/summary | dashboard-summary |

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import type { DashboardSummary, NewSubscriptionRequest, Subscription } from '../app/types/subscription'
+import type { DashboardSummary, NewSubscriptionRequest, Subscription, UpdateSubscriptionRequest } from '../app/types/subscription'
 import { useSubscriptionStore } from '../app/stores/subscriptionStore'
 import * as api from '../app/api/subscriptionsApi'
 
@@ -83,6 +83,30 @@ describe('subscriptionStore', () => {
     await store.updateStatus(baseSubscription.id, 'paused')
 
     expect(store.subscriptions[0].status).toBe('paused')
+  })
+
+  it('updates subscription details in local state', async () => {
+    const store = useSubscriptionStore()
+    store.$patch({ subscriptions: [baseSubscription] })
+    const request: UpdateSubscriptionRequest = {
+      name: 'Netflix Premium',
+      vendor: 'Netflix Inc.',
+      logoUrl: null,
+      category: 'streaming',
+      price: 19.99,
+      cycle: 'monthly',
+      nextPaymentDate: '2026-06-01',
+      paymentMethod: 'Visa',
+      startedAt: '2023-01-01',
+      cancelledAt: null,
+    }
+    const updated: Subscription = { ...baseSubscription, ...request }
+    vi.spyOn(api, 'updateSubscription').mockResolvedValue(updated)
+
+    await store.update(baseSubscription.id, request)
+
+    expect(store.subscriptions[0].name).toBe('Netflix Premium')
+    expect(store.subscriptions[0].price).toBe(19.99)
   })
 
   it('deletes subscription from local state', async () => {

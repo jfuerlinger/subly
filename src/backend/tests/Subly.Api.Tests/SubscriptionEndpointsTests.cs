@@ -76,6 +76,36 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     }
 
     [Fact]
+    public async Task Update_ShouldUpdateExistingSubscription()
+    {
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var client = await CreateAuthenticatedClientAsync($"update-{uniqueSuffix}@example.com");
+        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Notion-{uniqueSuffix}"));
+        var created = await createResponse.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
+
+        var request = new UpdateSubscriptionRequest(
+            Name: $"Notion Premium-{uniqueSuffix}",
+            Vendor: "Notion Labs",
+            Category: "software",
+            Price: 12.99m,
+            Cycle: BillingCycle.Yearly,
+            NextPaymentDate: new DateOnly(2026, 8, 10),
+            PaymentMethod: "Mastercard",
+            StartedAt: new DateOnly(2025, 1, 1),
+            CancelledAt: null);
+
+        var response = await client.PutAsJsonAsync($"/api/subscriptions/{created!.Id}", request);
+        var updated = await response.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        updated.Should().NotBeNull();
+        updated!.Name.Should().Be(request.Name);
+        updated.Vendor.Should().Be(request.Vendor);
+        updated.Cycle.Should().Be(BillingCycle.Yearly);
+        updated.Status.Should().Be(SubscriptionStatus.Active);
+    }
+
+    [Fact]
     public async Task GetDashboardSummary_ShouldReturnCalculatedSummaryForCurrentUser()
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];

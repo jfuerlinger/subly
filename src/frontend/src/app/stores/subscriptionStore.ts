@@ -1,11 +1,18 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { DashboardSummary, NewSubscriptionRequest, Subscription, SubscriptionStatus } from '../types/subscription'
+import type {
+  DashboardSummary,
+  NewSubscriptionRequest,
+  Subscription,
+  SubscriptionStatus,
+  UpdateSubscriptionRequest,
+} from '../types/subscription'
 import {
   createSubscription,
   deleteSubscription,
   fetchDashboardSummary,
   fetchSubscriptions,
+  updateSubscription,
   updateSubscriptionStatus,
 } from '../api/subscriptionsApi'
 import { buildDashboardSummary } from '../utils/subscriptionMath'
@@ -48,6 +55,12 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     await refreshSummary()
   }
 
+  async function update(id: string, request: UpdateSubscriptionRequest): Promise<void> {
+    const updated = await updateSubscription(id, request)
+    subscriptions.value = subscriptions.value.map((subscription) => (subscription.id === id ? updated : subscription))
+    await refreshSummary()
+  }
+
   async function remove(id: string): Promise<void> {
     await deleteSubscription(id)
     subscriptions.value = subscriptions.value.filter((subscription) => subscription.id !== id)
@@ -70,6 +83,7 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     activeSubscriptions,
     initialize,
     create,
+    update,
     updateStatus,
     remove,
   }
