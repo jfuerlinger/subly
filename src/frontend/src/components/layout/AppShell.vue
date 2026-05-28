@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useProfileStore } from '../../app/stores/profileStore'
 
 interface NavItem {
   to: string
@@ -20,6 +21,8 @@ const overviewNav: NavItem[] = [
 const systemNav: NavItem[] = [
   { to: '/settings', label: 'Einstellungen', icon: 'settings' },
 ]
+
+const profileStore = useProfileStore()
 
 const route = useRoute()
 const isMobileMenuOpen = ref(false)
@@ -162,9 +165,9 @@ watch(
         active-class="sidebar-user--active"
         @click="closeMobileMenu"
       >
-        <div class="sidebar-user-avatar">MW</div>
+        <div class="sidebar-user-avatar">{{ profileStore.initials }}</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Maximilian W.</div>
+          <div class="sidebar-user-name">{{ profileStore.displayName }}</div>
           <div class="sidebar-user-plan">Free Plan</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
