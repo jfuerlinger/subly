@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useSubscriptionStore } from '../app/stores/subscriptionStore'
+import { buildDashboardSummary } from '../app/utils/subscriptionMath'
 import SummaryCards from '../components/dashboard/SummaryCards.vue'
 import SubscriptionDonutChart from '../components/dashboard/SubscriptionDonutChart.vue'
 import SubscriptionModal from '../components/subscriptions/SubscriptionModal.vue'
@@ -8,12 +9,37 @@ import { formatCurrency, formatDate } from '../app/utils/formatting'
 
 const store = useSubscriptionStore()
 const showModal = ref(false)
+const searchQuery = ref('')
+
+const filteredSubscriptions = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) {
+    return store.subscriptions
+  }
+
+  return store.subscriptions.filter((subscription) => {
+    const searchableValues = [subscription.name, subscription.vendor, subscription.category]
+    return searchableValues.some((value) => value.toLowerCase().includes(query))
+  })
+})
+
+const filteredSummary = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return store.summary
+  }
+
+  return buildDashboardSummary(filteredSubscriptions.value)
+})
 
 const upcoming = computed(() => {
   const today = new Date()
   const end = new Date(today)
   end.setDate(end.getDate() + 30)
-  return store.activeSubscriptions.filter((subscription) => {
+  return filteredSubscriptions.value.filter((subscription) => {
+    if (subscription.status !== 'active') {
+      return false
+    }
+
     const date = new Date(subscription.nextPaymentDate)
     return date >= today && date <= end
   })
@@ -32,7 +58,13 @@ onMounted(async () => {
       <h1>Dashboard</h1>
       <p v-if="store.error" class="error">{{ store.error }}</p>
       <div class="view-header-actions">
-        <input class="search-input" type="text" placeholder="Abo suchen…" />
+        <input
+          v-model="searchQuery"
+          class="search-input"
+          type="text"
+          placeholder="Abo suchen…"
+          aria-label="Abo suchen"
+        />
         <button class="icon-btn" title="Exportieren">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -54,10 +86,10 @@ onMounted(async () => {
       </div>
     </header>
 
-    <SummaryCards :summary="store.summary" />
+    <SummaryCards :summary="filteredSummary" />
 
     <div class="dashboard-bottom-grid">
-      <SubscriptionDonutChart :subscriptions="store.subscriptions" />
+      <SubscriptionDonutChart :subscriptions="filteredSubscriptions" />
 
       <section class="card">
         <h2>Anstehende Zahlungen</h2>
