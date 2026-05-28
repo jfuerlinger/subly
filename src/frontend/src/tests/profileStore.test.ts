@@ -49,6 +49,13 @@ describe('profileStore', () => {
     expect(store.displayName).toBe('Max')
   })
 
+  it('displays last name only when first name is missing', () => {
+    localStorageMock['subly-profile-last-name'] = 'Mustermann'
+    const store = useProfileStore()
+
+    expect(store.displayName).toBe('Mustermann')
+  })
+
   it('displays abbreviated last name when both names are set', () => {
     localStorageMock['subly-profile-first-name'] = 'Max'
     localStorageMock['subly-profile-last-name'] = 'Mustermann'

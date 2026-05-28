@@ -13,6 +13,7 @@ export const useProfileStore = defineStore('profile', () => {
     const last = lastName.value.trim()
     if (!first && !last) return 'Mein Profil'
     if (!last) return first
+    if (!first) return last
     return `${first} ${last.charAt(0)}.`
   })
 
