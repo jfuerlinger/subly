@@ -58,4 +58,30 @@ public class CategoryApiClient
             return null;
         }
     }
+
+    public async Task<CategoryDto?> RenameAsync(Guid id, RenameCategoryRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PatchAsync($"/api/categories/{id}/name", content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                Console.Error.WriteLine($"Error: {response.StatusCode}");
+                Console.Error.WriteLine(errorContent);
+                return null;
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<CategoryDto>(responseContent, JsonSerializerOptionsProvider.Web);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error renaming category: {ex.Message}");
+            return null;
+        }
+    }
 }

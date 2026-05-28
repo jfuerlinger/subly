@@ -50,4 +50,34 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task RenameCategory_ShouldRenameAndReturnUpdatedCategory()
+    {
+        var client = factory.CreateClient();
+
+        // First create a category to rename
+        var created = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest("renameme"));
+        var body = await created.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+        body.Should().NotBeNull();
+
+        var renameResponse = await client.PatchAsJsonAsync($"/api/categories/{body!.Id}/name", new { name = "renamed" });
+        var renamed = await renameResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+
+        renameResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        renamed.Should().NotBeNull();
+        renamed!.Name.Should().Be("renamed");
+        renamed.Id.Should().Be(body.Id);
+    }
+
+    [Fact]
+    public async Task RenameCategory_ShouldReturnNotFound_WhenCategoryDoesNotExist()
+    {
+        var client = factory.CreateClient();
+        var nonExistentId = Guid.NewGuid();
+
+        var response = await client.PatchAsJsonAsync($"/api/categories/{nonExistentId}/name", new { name = "anything" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

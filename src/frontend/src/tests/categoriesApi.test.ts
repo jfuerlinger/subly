@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AxiosResponse } from 'axios'
 import { apiClient } from '../app/api/client'
-import { createCategory, fetchCategories, type CategoryDto } from '../app/api/categoriesApi'
+import { createCategory, fetchCategories, renameCategory, type CategoryDto } from '../app/api/categoriesApi'
 
 describe('categoriesApi', () => {
   beforeEach(() => {
@@ -29,5 +29,15 @@ describe('categoriesApi', () => {
 
     expect(result.name).toBe('gaming')
     expect(apiClient.post).toHaveBeenCalledWith('/categories', { name: 'gaming' })
+  })
+
+  it('renames an existing category', async () => {
+    const updated: CategoryDto = { id: 'abc-123', name: 'entertainment' }
+    vi.spyOn(apiClient, 'patch').mockResolvedValue({ data: updated } as AxiosResponse<CategoryDto>)
+
+    const result = await renameCategory('abc-123', 'entertainment')
+
+    expect(result.name).toBe('entertainment')
+    expect(apiClient.patch).toHaveBeenCalledWith('/categories/abc-123/name', { name: 'entertainment' })
   })
 })

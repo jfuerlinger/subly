@@ -32,4 +32,24 @@ public sealed class CategoryService(ICategoryRepository repository) : ICategoryS
 
         return new CategoryDto(category.Id, category.Name);
     }
+
+    public async Task<CategoryDto> RenameCategoryAsync(Guid id, string newName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(newName))
+            throw new ArgumentException("Category name is required.", nameof(newName));
+
+        var category = await repository.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Category '{id}' not found.");
+
+        var normalized = newName.Trim().ToLowerInvariant();
+
+        var existing = await repository.GetByNameAsync(normalized, cancellationToken);
+        if (existing is not null && existing.Id != id)
+            throw new ArgumentException($"Category '{normalized}' already exists.", nameof(newName));
+
+        category.Rename(normalized);
+        await repository.SaveChangesAsync(cancellationToken);
+
+        return new CategoryDto(category.Id, category.Name);
+    }
 }

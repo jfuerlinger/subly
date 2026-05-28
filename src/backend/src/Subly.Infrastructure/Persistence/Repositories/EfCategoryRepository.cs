@@ -12,6 +12,12 @@ internal sealed class EfCategoryRepository(SublyDbContext dbContext) : ICategory
         return await dbContext.Categories.ToListAsync(cancellationToken);
     }
 
+    public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Categories
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
     public async Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         return await dbContext.Categories

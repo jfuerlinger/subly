@@ -190,6 +190,20 @@ dotnet run --project src/Subly.Cli -- category-create --name "Education"
 
 ---
 
+### Rename Category
+
+Rename an existing subscription category.
+
+```bash
+dotnet run --project src/Subly.Cli -- category-rename --id <category-id> --name "New Name"
+```
+
+**Options:**
+- `--id` or `-i` (required): Category ID (GUID)
+- `--name` or `-n` (required): New category name
+
+---
+
 ## Examples
 
 ### Complete Workflow
@@ -258,6 +272,7 @@ Exit codes:
 | GET /api/dashboard/summary | dashboard-summary |
 | GET /api/categories | category-list |
 | POST /api/categories | category-create |
+| PATCH /api/categories/{id}/name | category-rename |
 
 ---
 
