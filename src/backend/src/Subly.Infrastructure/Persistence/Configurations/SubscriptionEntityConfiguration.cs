@@ -22,6 +22,7 @@ internal sealed class SubscriptionEntityConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.AutoRenew).IsRequired();
         builder.Property(x => x.StartedAt).IsRequired();
         builder.Property(x => x.CancelledAt);
+        builder.Property(x => x.LogoUrl).HasColumnType("text");
         builder.Property(x => x.NextPaymentDate).IsRequired();
 
         builder.HasIndex(x => x.Status);

@@ -86,6 +86,30 @@ public class SubscriptionApiClient
         }
     }
 
+    public async Task<List<LogoSuggestionDto>?> SuggestLogosAsync(string name, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var encodedName = Uri.EscapeDataString(name);
+            var response = await _httpClient.GetAsync($"/api/subscriptions/logo-suggestions?name={encodedName}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                Console.Error.WriteLine($"Error: {response.StatusCode}");
+                Console.Error.WriteLine(errorContent);
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<LogoSuggestionDto>>(content, JsonSerializerOptionsProvider.Web);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error fetching logo suggestions: {ex.Message}");
+            return null;
+        }
+    }
+
     public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, UpdateSubscriptionStatusRequest request, CancellationToken cancellationToken = default)
     {
         try

@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type {
   DashboardSummary,
+  LogoSuggestion,
   NewSubscriptionRequest,
   Subscription,
   SubscriptionStatus,
@@ -38,4 +39,11 @@ export async function updateSubscription(id: string, request: UpdateSubscription
 
 export async function deleteSubscription(id: string): Promise<void> {
   await apiClient.delete(`/subscriptions/${id}`)
+}
+
+export async function fetchLogoSuggestions(name: string): Promise<LogoSuggestion[]> {
+  const response = await apiClient.get<LogoSuggestion[]>('/subscriptions/logo-suggestions', {
+    params: { name },
+  })
+  return response.data
 }

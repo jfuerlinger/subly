@@ -127,6 +127,7 @@ dotnet run --project src/Subly.Cli -- subscription-create \
   --next-payment "2026-06-17" \
   --payment-method "credit_card" \
   --started "2024-01-01" \
+  --logo-url "https://logo.clearbit.com/netflix.com" \
   --token "<token>"
 ```
 
@@ -140,6 +141,22 @@ dotnet run --project src/Subly.Cli -- subscription-create \
 - `--payment-method` (required): Payment method (e.g., credit_card, paypal, bank_transfer)
 - `--started` (required): Subscription start date (format: yyyy-MM-dd)
 - `--cancelled` (optional): Cancellation date (format: yyyy-MM-dd)
+- `--logo-url` (optional): Logo URL or image data URL
+
+---
+
+### Suggest Subscription Logos
+
+Generate logo suggestions based on a subscription name.
+
+```bash
+dotnet run --project src/Subly.Cli -- subscription-suggest-logos \
+  --name "Netflix" \
+  --token "<token>"
+```
+
+**Options:**
+- `--name` or `-n` (required): Subscription name to look up
 
 ---
 
@@ -376,6 +393,7 @@ Exit codes:
 | GET /api/subscriptions | subscription-list |
 | GET /api/subscriptions/{id} | subscription-get |
 | POST /api/subscriptions | subscription-create |
+| GET /api/subscriptions/logo-suggestions | subscription-suggest-logos |
 | PUT /api/subscriptions/{id} | subscription-update |
 | PATCH /api/subscriptions/{id}/status | subscription-update-status |
 | DELETE /api/subscriptions/{id} | subscription-delete |

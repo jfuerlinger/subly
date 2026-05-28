@@ -119,6 +119,19 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         summary.MonthlyTotal.Should().BeGreaterThan(0m);
     }
 
+    [Fact]
+    public async Task GetLogoSuggestions_ShouldReturnSuggestionEntries()
+    {
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var client = await CreateAuthenticatedClientAsync($"logos-{uniqueSuffix}@example.com");
+
+        var suggestions = await client.GetFromJsonAsync<IReadOnlyList<LogoSuggestionDto>>("/api/subscriptions/logo-suggestions?name=Netflix", JsonOptions);
+
+        suggestions.Should().NotBeNull();
+        suggestions.Should().NotBeEmpty();
+        suggestions!.Should().Contain(x => x.Domain == "netflix.com");
+    }
+
     private static CreateSubscriptionRequest CreateSubscriptionRequest(string name)
     {
         return new CreateSubscriptionRequest(

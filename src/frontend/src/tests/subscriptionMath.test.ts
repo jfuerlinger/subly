@@ -16,6 +16,7 @@ const sample: Subscription = {
   id: '1',
   name: 'Prime',
   vendor: 'Amazon',
+  logoUrl: null,
   category: 'membership',
   price: 120,
   cycle: 'yearly',

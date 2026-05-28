@@ -5,6 +5,7 @@ import {
   createSubscription,
   deleteSubscription,
   fetchDashboardSummary,
+  fetchLogoSuggestions,
   fetchSubscriptions,
   updateSubscription,
   updateSubscriptionStatus,
@@ -29,6 +30,7 @@ describe('subscriptionsApi', () => {
     const request: NewSubscriptionRequest = {
       name: 'ChatGPT Plus',
       vendor: 'OpenAI',
+      logoUrl: null,
       category: 'software',
       price: 22,
       cycle: 'monthly',
@@ -50,6 +52,7 @@ describe('subscriptionsApi', () => {
       id: 'sub-1',
       name: 'Notion',
       vendor: 'Notion',
+      logoUrl: null,
       category: 'software',
       price: 10,
       cycle: 'monthly',
@@ -71,6 +74,7 @@ describe('subscriptionsApi', () => {
     const request: UpdateSubscriptionRequest = {
       name: 'Notion Plus',
       vendor: 'Notion Labs',
+      logoUrl: null,
       category: 'software',
       price: 12.99,
       cycle: 'yearly',
@@ -111,5 +115,16 @@ describe('subscriptionsApi', () => {
     vi.spyOn(apiClient, 'delete').mockResolvedValue({} as AxiosResponse<void>)
 
     await expect(deleteSubscription('sub-1')).resolves.toBeUndefined()
+  })
+
+  it('fetches logo suggestions', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: [{ provider: 'Clearbit', domain: 'netflix.com', logoUrl: 'https://logo.clearbit.com/netflix.com' }],
+    } as AxiosResponse)
+
+    const result = await fetchLogoSuggestions('Netflix')
+
+    expect(result).toHaveLength(1)
+    expect(result[0].domain).toBe('netflix.com')
   })
 })

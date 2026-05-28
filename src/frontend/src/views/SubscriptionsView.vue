@@ -27,6 +27,7 @@ const modalInitialValues = computed<NewSubscriptionRequest | null>(() => {
   return {
     name: subscription.name,
     vendor: subscription.vendor,
+    logoUrl: subscription.logoUrl,
     category: subscription.category,
     price: subscription.price,
     cycle: subscription.cycle,

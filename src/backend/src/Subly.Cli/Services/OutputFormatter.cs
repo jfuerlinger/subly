@@ -51,6 +51,7 @@ public static class OutputFormatter
         Console.WriteLine($"Auto Renew:        {(subscription.AutoRenew ? "Yes" : "No")}");
         Console.WriteLine($"Started:           {subscription.StartedAt}");
         Console.WriteLine($"Cancelled:         {subscription.CancelledAt?.ToString() ?? "Active"}");
+        Console.WriteLine($"Logo URL:          {subscription.LogoUrl ?? "Not set"}");
         Console.WriteLine();
     }
 
@@ -74,6 +75,32 @@ public static class OutputFormatter
             PrintTableRow(
                 (cat.Id.ToString(), idWidth),
                 (cat.Name, nameWidth));
+        }
+    }
+
+    public static void PrintLogoSuggestionTable(List<LogoSuggestionDto> suggestions)
+    {
+        if (suggestions.Count == 0)
+        {
+            Console.WriteLine("No logo suggestions found.");
+            return;
+        }
+
+        const int providerWidth = 22;
+        const int domainWidth = 26;
+        const int urlWidth = 70;
+
+        PrintTableHeader(
+            ("Provider", providerWidth),
+            ("Domain", domainWidth),
+            ("Logo URL", urlWidth));
+
+        foreach (var suggestion in suggestions)
+        {
+            PrintTableRow(
+                (suggestion.Provider, providerWidth),
+                (suggestion.Domain, domainWidth),
+                (suggestion.LogoUrl, urlWidth));
         }
     }
 

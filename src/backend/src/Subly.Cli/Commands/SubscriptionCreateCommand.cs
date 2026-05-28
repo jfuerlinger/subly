@@ -35,6 +35,9 @@ public class SubscriptionCreateCommand
     [Option("cancelled", HelpText = "Cancellation date (yyyy-MM-dd)")]
     public string? CancelledAt { get; set; }
 
+    [Option("logo-url", HelpText = "Logo URL or image data URL")]
+    public string? LogoUrl { get; set; }
+
     [Option('u', "api-url", Default = "http://localhost:5000", HelpText = "Base URL for the Subly API")]
     public string ApiUrl { get; set; } = string.Empty;
 
@@ -83,7 +86,8 @@ public class SubscriptionCreateCommand
                 nextPaymentDateValue,
                 PaymentMethod ?? string.Empty,
                 startedAtValue,
-                cancelledAtValue);
+                cancelledAtValue,
+                LogoUrl);
 
             using var httpClient = CliHttpClientFactory.Create(ApiUrl, Token);
             var client = new SubscriptionApiClient(httpClient);

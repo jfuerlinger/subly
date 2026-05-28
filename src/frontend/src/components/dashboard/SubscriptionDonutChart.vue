@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import type { Subscription } from '../../app/types/subscription'
 import { formatCurrency } from '../../app/utils/formatting'
 import { toMonthlyAmount } from '../../app/utils/subscriptionMath'
+import SubscriptionLogo from '../subscriptions/SubscriptionLogo.vue'
 
 const props = defineProps<{
   subscriptions: Subscription[]
@@ -222,7 +223,10 @@ const segments = computed(() => {
       </div>
       <ul class="donut-tooltip-list">
         <li v-for="sub in hoveredData.items" :key="sub.id">
-          <span class="donut-tooltip-sub-name">{{ sub.name }}</span>
+          <span class="donut-tooltip-sub-name">
+            <SubscriptionLogo :name="sub.name" :logo-url="sub.logoUrl" :size="18" />
+            <span>{{ sub.name }}</span>
+          </span>
           <span class="donut-tooltip-sub-price">{{ formatCurrency(toMonthlyAmount(sub)) }}/Mo.</span>
         </li>
       </ul>
@@ -371,6 +375,9 @@ const segments = computed(() => {
 }
 
 .donut-tooltip-sub-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--color-text-muted, #6b7280);
   overflow: hidden;
   text-overflow: ellipsis;

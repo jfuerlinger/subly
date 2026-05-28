@@ -32,6 +32,8 @@ public sealed class Subscription
 
     public DateOnly? CancelledAt { get; private set; }
 
+    public string? LogoUrl { get; private set; }
+
     public static Subscription Create(
         Guid userId,
         string name,
@@ -44,7 +46,8 @@ public sealed class Subscription
         DateOnly startedAt,
         DateOnly? cancelledAt = null,
         SubscriptionStatus status = SubscriptionStatus.Active,
-        bool autoRenew = true)
+        bool autoRenew = true,
+        string? logoUrl = null)
     {
         if (userId == Guid.Empty)
         {
@@ -106,6 +109,7 @@ public sealed class Subscription
             CancelledAt = cancelledAt,
             Status = status,
             AutoRenew = autoRenew,
+            LogoUrl = NormalizeLogoUrl(logoUrl),
         };
     }
 
@@ -143,7 +147,8 @@ public sealed class Subscription
         string paymentMethod,
         DateOnly startedAt,
         DateOnly? cancelledAt,
-        SubscriptionStatus status)
+        SubscriptionStatus status,
+        string? logoUrl = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -195,5 +200,43 @@ public sealed class Subscription
         StartedAt = startedAt;
         CancelledAt = cancelledAt;
         Status = status;
+
+        if (logoUrl is not null)
+        {
+            LogoUrl = NormalizeLogoUrl(logoUrl);
+        }
+    }
+
+    private static string? NormalizeLogoUrl(string? logoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(logoUrl))
+        {
+            return null;
+        }
+
+        var trimmedLogoUrl = logoUrl.Trim();
+
+        if (trimmedLogoUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            const int maxLogoDataUrlLength = 700_000;
+            if (trimmedLogoUrl.Length > maxLogoDataUrlLength)
+            {
+                throw new ArgumentException("Logo upload is too large.");
+            }
+
+            return trimmedLogoUrl;
+        }
+
+        if (!Uri.TryCreate(trimmedLogoUrl, UriKind.Absolute, out var parsedUri))
+        {
+            throw new ArgumentException("Logo URL must be an absolute URL or image data URL.", nameof(logoUrl));
+        }
+
+        if (parsedUri.Scheme is not ("http" or "https"))
+        {
+            throw new ArgumentException("Logo URL must use HTTP or HTTPS.", nameof(logoUrl));
+        }
+
+        return trimmedLogoUrl;
     }
 }

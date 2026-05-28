@@ -4,6 +4,7 @@ import type { Subscription, SubscriptionStatus } from '../../app/types/subscript
 import { formatCurrency, formatDate } from '../../app/utils/formatting'
 import { getSubscriptionStatusMeta, subscriptionStatusOptions } from '../../app/utils/subscriptionStatus'
 import SubscriptionStatusBadge from './SubscriptionStatusBadge.vue'
+import SubscriptionLogo from './SubscriptionLogo.vue'
 
 const props = defineProps<{
   subscriptions: Subscription[]
@@ -256,7 +257,12 @@ const processedSubscriptions = computed(() => {
             <td colspan="8" class="table-empty">Keine Abos gefunden.</td>
           </tr>
           <tr v-for="subscription in processedSubscriptions" :key="subscription.id">
-            <td>{{ subscription.name }}</td>
+            <td>
+              <div class="subscription-name-cell">
+                <SubscriptionLogo :name="subscription.name" :logo-url="subscription.logoUrl" :size="22" />
+                <span>{{ subscription.name }}</span>
+              </div>
+            </td>
             <td>{{ subscription.category }}</td>
             <td>{{ formatCurrency(subscription.price) }}</td>
             <td>{{ formatDate(subscription.nextPaymentDate) }}</td>
@@ -284,3 +290,11 @@ const processedSubscriptions = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.subscription-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+</style>
