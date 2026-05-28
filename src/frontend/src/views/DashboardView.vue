@@ -94,15 +94,15 @@ onMounted(async () => {
 
       <section class="card">
         <h2>Anstehende Zahlungen</h2>
-          <ul class="upcoming-list">
-            <li v-for="subscription in upcoming" :key="subscription.id">
-              <span class="upcoming-name">
-                <SubscriptionLogo :name="subscription.name" :logo-url="subscription.logoUrl" :size="20" />
-                <span>{{ subscription.name }}</span>
-              </span>
-              <span>{{ formatDate(subscription.nextPaymentDate) }}</span>
-              <span>{{ formatCurrency(subscription.price) }}</span>
-            </li>
+        <ul class="upcoming-list">
+          <li v-for="subscription in upcoming" :key="subscription.id">
+            <span class="upcoming-name">
+              <SubscriptionLogo :name="subscription.name" :logo-url="subscription.logoUrl" :size="20" />
+              <span>{{ subscription.name }}</span>
+            </span>
+            <span>{{ formatDate(subscription.nextPaymentDate) }}</span>
+            <span>{{ formatCurrency(subscription.price) }}</span>
+          </li>
         </ul>
         <p v-if="upcoming.length === 0" class="muted">Keine Zahlungen in den nächsten 30 Tagen.</p>
       </section>

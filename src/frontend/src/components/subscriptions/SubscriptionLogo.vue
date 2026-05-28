@@ -45,7 +45,7 @@ const sizePx = computed(() => `${props.size}px`)
     <img
       v-if="normalizedLogoUrl"
       :src="normalizedLogoUrl"
-      :alt="`${name} Logo`"
+      alt=""
       @error="hasImageError = true"
     />
     <span v-else class="subscription-logo__fallback">{{ initials }}</span>

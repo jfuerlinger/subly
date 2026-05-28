@@ -148,7 +148,7 @@ public sealed class Subscription
 
         if (trimmedLogoUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
         {
-            const int maxLogoDataUrlLength = 512_000;
+            const int maxLogoDataUrlLength = 700_000;
             if (trimmedLogoUrl.Length > maxLogoDataUrlLength)
             {
                 throw new ArgumentException("Logo upload is too large.");
