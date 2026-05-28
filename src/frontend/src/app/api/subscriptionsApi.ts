@@ -1,5 +1,11 @@
 import { apiClient } from './client'
-import type { DashboardSummary, NewSubscriptionRequest, Subscription, SubscriptionStatus } from '../types/subscription'
+import type {
+  DashboardSummary,
+  NewSubscriptionRequest,
+  Subscription,
+  SubscriptionStatus,
+  UpdateSubscriptionRequest,
+} from '../types/subscription'
 
 export async function fetchSubscriptions(): Promise<Subscription[]> {
   const response = await apiClient.get<Subscription[]>('/subscriptions')
@@ -22,6 +28,11 @@ export async function updateSubscriptionStatus(
   cancelledAt?: string | null,
 ): Promise<Subscription> {
   const response = await apiClient.patch<Subscription>(`/subscriptions/${id}/status`, { status, cancelledAt })
+  return response.data
+}
+
+export async function updateSubscription(id: string, request: UpdateSubscriptionRequest): Promise<Subscription> {
+  const response = await apiClient.put<Subscription>(`/subscriptions/${id}`, request)
   return response.data
 }
 

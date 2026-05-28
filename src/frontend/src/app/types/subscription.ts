@@ -29,6 +29,8 @@ export interface NewSubscriptionRequest {
   cancelledAt: string | null
 }
 
+export type UpdateSubscriptionRequest = NewSubscriptionRequest
+
 export interface DashboardSummary {
   monthlyTotal: number
   yearlyTotal: number

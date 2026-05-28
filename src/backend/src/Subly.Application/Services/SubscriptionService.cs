@@ -53,6 +53,48 @@ public sealed class SubscriptionService(
         return ToDto(subscription);
     }
 
+    public async Task<SubscriptionDto?> UpdateSubscriptionAsync(Guid id, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
+        if (subscription is null)
+        {
+            return null;
+        }
+
+        await ValidateRequestAsync(
+            new CreateSubscriptionRequest(
+                request.Name,
+                request.Vendor,
+                request.Category,
+                request.Price,
+                request.Cycle,
+                request.NextPaymentDate,
+                request.PaymentMethod,
+                request.StartedAt,
+                request.CancelledAt),
+            cancellationToken);
+
+        var nextStatus = request.CancelledAt.HasValue
+            ? SubscriptionStatus.Cancelled
+            : subscription.Status is SubscriptionStatus.Cancelled ? SubscriptionStatus.Active : subscription.Status;
+
+        subscription.UpdateDetails(
+            request.Name,
+            request.Vendor,
+            request.Category.ToLowerInvariant(),
+            request.Price,
+            request.Cycle,
+            request.NextPaymentDate,
+            request.PaymentMethod,
+            request.StartedAt,
+            request.CancelledAt,
+            nextStatus);
+
+        await repository.SaveChangesAsync(cancellationToken);
+        return ToDto(subscription);
+    }
+
     public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, DateOnly? cancelledAt, CancellationToken cancellationToken = default)
     {
         var userId = currentUserProvider.GetRequiredUserId();

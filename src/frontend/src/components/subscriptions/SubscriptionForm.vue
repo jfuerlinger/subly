@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import type { NewSubscriptionRequest } from '../../app/types/subscription'
 import { createCategory, fetchCategories, type CategoryDto } from '../../app/api/categoriesApi'
+
+const props = withDefaults(
+  defineProps<{
+    initialValues?: NewSubscriptionRequest | null
+    submitLabel?: string
+  }>(),
+  {
+    initialValues: null,
+    submitLabel: 'Abo hinzufügen',
+  },
+)
+const submitLabel = props.submitLabel
 
 const emit = defineEmits<{
   submit: [request: NewSubscriptionRequest]
@@ -23,21 +35,57 @@ function getLocalDateString(date = new Date()) {
 
 const today = getLocalDateString()
 
+function createDefaultForm(): NewSubscriptionRequest {
+  return {
+    name: '',
+    vendor: '',
+    category: categories.value[0]?.name ?? '',
+    price: 0,
+    cycle: 'monthly',
+    nextPaymentDate: today,
+    paymentMethod: 'Visa',
+    startedAt: today,
+    cancelledAt: null,
+  }
+}
+
+function applyFormValues(values: NewSubscriptionRequest) {
+  form.name = values.name
+  form.vendor = values.vendor
+  form.category = values.category
+  form.price = values.price
+  form.cycle = values.cycle
+  form.nextPaymentDate = values.nextPaymentDate
+  form.paymentMethod = values.paymentMethod
+  form.startedAt = values.startedAt
+  form.cancelledAt = values.cancelledAt
+}
+
 onMounted(async () => {
   categories.value = await fetchCategories()
+  if (!form.category) {
+    form.category = categories.value[0]?.name ?? ''
+  }
 })
 
-const form = reactive<NewSubscriptionRequest>({
-  name: '',
-  vendor: '',
-  category: '',
-  price: 0,
-  cycle: 'monthly',
-  nextPaymentDate: today,
-  paymentMethod: 'Visa',
-  startedAt: today,
-  cancelledAt: null,
-})
+const form = reactive<NewSubscriptionRequest>(createDefaultForm())
+
+watch(
+  () => props.initialValues,
+  (initialValues) => {
+    showNewCategoryInput.value = false
+    newCategoryName.value = ''
+    newCategoryError.value = ''
+
+    if (initialValues) {
+      applyFormValues(initialValues)
+      return
+    }
+
+    applyFormValues(createDefaultForm())
+  },
+  { immediate: true },
+)
 
 function onCategoryChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
@@ -92,15 +140,10 @@ function onSubmit() {
     ...form,
     cancelledAt: form.cancelledAt ? form.cancelledAt : null,
   })
-  form.name = ''
-  form.vendor = ''
-  form.category = categories.value[0]?.name ?? ''
-  form.price = 0
-  form.cycle = 'monthly'
-  form.nextPaymentDate = today
-  form.paymentMethod = 'Visa'
-  form.startedAt = today
-  form.cancelledAt = null
+
+  if (!props.initialValues) {
+    applyFormValues(createDefaultForm())
+  }
 }
 </script>
 
@@ -191,7 +234,7 @@ function onSubmit() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        Abo hinzufügen
+        {{ submitLabel }}
       </button>
     </div>
   </form>

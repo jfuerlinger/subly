@@ -111,4 +111,20 @@ describe('SubscriptionTable', () => {
     await fireEvent.click(netflixButtons.getByRole('button', { name: 'Pausiert' }))
     expect(emitted().updateStatus).toEqual([['sub-1', 'paused']])
   })
+
+  it('emits edit event when clicking Bearbeiten', async () => {
+    const { emitted } = render(SubscriptionTable, {
+      props: {
+        subscriptions,
+      },
+    })
+
+    const netflixRow = screen.getByText('Netflix').closest('tr')
+    expect(netflixRow).not.toBeNull()
+
+    const netflixButtons = within(netflixRow as HTMLElement)
+    await fireEvent.click(netflixButtons.getByRole('button', { name: 'Bearbeiten' }))
+
+    expect(emitted().edit).toEqual([[subscriptions[0]]])
+  })
 })

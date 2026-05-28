@@ -6,9 +6,10 @@ import {
   deleteSubscription,
   fetchDashboardSummary,
   fetchSubscriptions,
+  updateSubscription,
   updateSubscriptionStatus,
 } from '../app/api/subscriptionsApi'
-import type { DashboardSummary, NewSubscriptionRequest, Subscription } from '../app/types/subscription'
+import type { DashboardSummary, NewSubscriptionRequest, Subscription, UpdateSubscriptionRequest } from '../app/types/subscription'
 
 describe('subscriptionsApi', () => {
   beforeEach(() => {
@@ -64,6 +65,31 @@ describe('subscriptionsApi', () => {
     const result = await updateSubscriptionStatus('sub-1', 'paused')
 
     expect(result.status).toBe('paused')
+  })
+
+  it('updates subscription details', async () => {
+    const request: UpdateSubscriptionRequest = {
+      name: 'Notion Plus',
+      vendor: 'Notion Labs',
+      category: 'software',
+      price: 12.99,
+      cycle: 'yearly',
+      nextPaymentDate: '2026-08-10',
+      paymentMethod: 'Mastercard',
+      startedAt: '2025-01-01',
+      cancelledAt: null,
+    }
+    const responsePayload = {
+      id: 'sub-1',
+      ...request,
+      status: 'active',
+      autoRenew: true,
+    } as Subscription
+    vi.spyOn(apiClient, 'put').mockResolvedValue({ data: responsePayload } as AxiosResponse<Subscription>)
+
+    const result = await updateSubscription('sub-1', request)
+
+    expect(result.name).toBe('Notion Plus')
   })
 
   it('fetches dashboard summary', async () => {
