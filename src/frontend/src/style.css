@@ -857,11 +857,11 @@ button.danger {
   color: #fca5a5;
 }
 
-[data-theme="dark"] button {
+[data-theme="dark"] button:not(.mobile-nav-backdrop) {
   background: var(--color-border);
   color: var(--color-text);
 }
 
-[data-theme="dark"] button:hover {
+[data-theme="dark"] button:not(.mobile-nav-backdrop):hover {
   background: var(--color-border-light);
 }
