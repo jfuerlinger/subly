@@ -58,7 +58,13 @@ onMounted(async () => {
       <h1>Dashboard</h1>
       <p v-if="store.error" class="error">{{ store.error }}</p>
       <div class="view-header-actions">
-        <input v-model="searchQuery" class="search-input" type="text" placeholder="Abo suchen…" />
+        <input
+          v-model="searchQuery"
+          class="search-input"
+          type="text"
+          placeholder="Abo suchen…"
+          aria-label="Abo suchen"
+        />
         <button class="icon-btn" title="Exportieren">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

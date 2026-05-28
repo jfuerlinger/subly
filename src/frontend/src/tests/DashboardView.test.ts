@@ -60,7 +60,7 @@ describe('DashboardView', () => {
   it('filters dashboard subscriptions by search query', async () => {
     render(DashboardView)
 
-    await fireEvent.update(screen.getByPlaceholderText('Abo suchen…'), 'netflix')
+    await fireEvent.update(screen.getByRole('textbox', { name: /abo suchen/i }), 'netflix')
 
     expect(screen.getByText('Netflix')).toBeInTheDocument()
     expect(screen.queryByText('Spotify')).not.toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('DashboardView', () => {
   it('shows empty dashboard sections when search has no match', async () => {
     render(DashboardView)
 
-    await fireEvent.update(screen.getByPlaceholderText('Abo suchen…'), 'xyz')
+    await fireEvent.update(screen.getByRole('textbox', { name: /abo suchen/i }), 'xyz')
 
     expect(screen.getByText('Keine aktiven Abonnements.')).toBeInTheDocument()
     expect(screen.getByText('Keine Zahlungen in den nächsten 30 Tagen.')).toBeInTheDocument()
