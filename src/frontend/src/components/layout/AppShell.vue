@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useProfileStore } from '../../app/stores/profileStore'
+
 interface NavItem {
   to: string
   label: string
@@ -17,11 +21,58 @@ const overviewNav: NavItem[] = [
 const systemNav: NavItem[] = [
   { to: '/settings', label: 'Einstellungen', icon: 'settings' },
 ]
+
+const profileStore = useProfileStore()
+
+const route = useRoute()
+const isMobileMenuOpen = ref(false)
+const mobileNavigationId = 'primary-navigation'
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isMobileMenuOpen.value) {
+    closeMobileMenu()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMobileMenu()
+  },
+)
 </script>
 
 <template>
-  <div class="app-shell">
-    <aside class="sidebar">
+  <div class="app-shell" :class="{ 'app-shell--menu-open': isMobileMenuOpen }">
+    <button
+      type="button"
+      class="mobile-nav-backdrop"
+      :class="{ 'mobile-nav-backdrop--visible': isMobileMenuOpen }"
+      aria-label="Menü schließen"
+      @click="closeMobileMenu"
+    />
+
+    <aside
+      class="sidebar"
+      :class="{ 'sidebar--open': isMobileMenuOpen }"
+      :id="mobileNavigationId"
+    >
       <!-- Brand -->
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon">S</div>
@@ -40,6 +91,7 @@ const systemNav: NavItem[] = [
           :to="item.to"
           class="nav-link"
           active-class="nav-link-active"
+          @click="closeMobileMenu"
         >
           <!-- Grid icon -->
           <svg v-if="item.icon === 'grid'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -82,6 +134,7 @@ const systemNav: NavItem[] = [
           :to="item.to"
           class="nav-link"
           active-class="nav-link-active"
+          @click="closeMobileMenu"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -106,10 +159,15 @@ const systemNav: NavItem[] = [
       </div>
 
       <!-- User -->
-      <RouterLink to="/profile" class="sidebar-user" active-class="sidebar-user--active">
-        <div class="sidebar-user-avatar">MW</div>
+      <RouterLink
+        to="/profile"
+        class="sidebar-user"
+        active-class="sidebar-user--active"
+        @click="closeMobileMenu"
+      >
+        <div class="sidebar-user-avatar">{{ profileStore.initials }}</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Maximilian W.</div>
+          <div class="sidebar-user-name">{{ profileStore.displayName }}</div>
           <div class="sidebar-user-plan">Free Plan</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -119,6 +177,47 @@ const systemNav: NavItem[] = [
     </aside>
 
     <main class="content">
+      <header class="mobile-topbar">
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          :aria-expanded="isMobileMenuOpen"
+          :aria-controls="mobileNavigationId"
+          :aria-label="isMobileMenuOpen ? 'Menü schließen' : 'Menü öffnen'"
+          @click="toggleMobileMenu"
+        >
+          <svg
+            v-if="!isMobileMenuOpen"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          <svg
+            v-else
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <RouterLink class="mobile-topbar-brand" to="/dashboard">Subly</RouterLink>
+      </header>
       <slot />
     </main>
   </div>

@@ -32,6 +32,7 @@ function formatCompletionTimestamp(value: string): string {
 async function handleResetDatabase() {
   isResetting.value = true
   resetError.value = null
+  resetResult.value = null
   try {
     resetResult.value = await resetDatabase()
     isResetConfirmationOpen.value = false
@@ -109,6 +110,7 @@ async function handleResetDatabase() {
               <p class="muted">
                 Danach werden automatisch alle Migrationen und das Seeding erneut ausgeführt.
               </p>
+              <p v-if="resetError" class="error-message modal-error">{{ resetError }}</p>
             </div>
             <footer class="modal-actions">
               <button class="btn btn--ghost" type="button" :disabled="isResetting" @click="cancelReset">

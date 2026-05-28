@@ -209,6 +209,18 @@ dotnet run --project src/Subly.Cli -- database-reset
 dotnet run --project src/Subly.Cli -- database-reset --yes
 ```
 
+### Rename Category
+
+Rename an existing subscription category.
+
+```bash
+dotnet run --project src/Subly.Cli -- category-rename --id <category-id> --name "New Name"
+```
+
+**Options:**
+- `--id` or `-i` (required): Category ID (GUID)
+- `--name` or `-n` (required): New category name
+
 ---
 
 ## Examples
@@ -280,6 +292,7 @@ Exit codes:
 | GET /api/categories | category-list |
 | POST /api/categories | category-create |
 | POST /api/admin/reset-database | database-reset |
+| PATCH /api/categories/{id}/name | category-rename |
 
 ---
 
