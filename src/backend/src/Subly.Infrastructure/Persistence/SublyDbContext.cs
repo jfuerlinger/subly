@@ -7,6 +7,7 @@ public sealed class SublyDbContext(DbContextOptions<SublyDbContext> options) : D
 {
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

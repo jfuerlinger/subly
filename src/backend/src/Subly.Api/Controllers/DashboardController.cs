@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subly.Application.Contracts;
 using Subly.Application.Services;
@@ -6,6 +7,7 @@ namespace Subly.Api.Controllers;
 
 [ApiController]
 [Route("api/dashboard")]
+[Authorize]
 public sealed class DashboardController(ISubscriptionService service) : ControllerBase
 {
     [HttpGet("summary")]

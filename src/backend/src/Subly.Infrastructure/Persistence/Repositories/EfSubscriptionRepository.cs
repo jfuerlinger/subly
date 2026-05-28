@@ -6,14 +6,17 @@ namespace Subly.Infrastructure.Persistence.Repositories;
 
 public sealed class EfSubscriptionRepository(SublyDbContext dbContext) : ISubscriptionRepository
 {
-    public async Task<IReadOnlyList<Subscription>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Subscription>> ListAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Subscriptions.AsNoTracking().ToListAsync(cancellationToken);
+        return await dbContext.Subscriptions
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .ToListAsync(cancellationToken);
     }
 
-    public Task<Subscription?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<Subscription?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
     {
-        return dbContext.Subscriptions.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return dbContext.Subscriptions.SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
     }
 
     public async Task AddAsync(Subscription subscription, CancellationToken cancellationToken = default)
@@ -21,9 +24,9 @@ public sealed class EfSubscriptionRepository(SublyDbContext dbContext) : ISubscr
         await dbContext.Subscriptions.AddAsync(subscription, cancellationToken);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
     {
-        var entity = await dbContext.Subscriptions.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entity = await dbContext.Subscriptions.SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
         if (entity is null)
         {
             return false;

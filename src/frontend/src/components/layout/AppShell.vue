@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../../app/stores/authStore'
 import { useProfileStore } from '../../app/stores/profileStore'
 
 interface NavItem {
@@ -22,6 +23,8 @@ const systemNav: NavItem[] = [
   { to: '/settings', label: 'Einstellungen', icon: 'settings' },
 ]
 
+const authStore = useAuthStore()
+const router = useRouter()
 const profileStore = useProfileStore()
 
 const route = useRoute()
@@ -56,6 +59,42 @@ watch(
     closeMobileMenu()
   },
 )
+
+const displayName = computed(() => {
+  if (profileStore.displayName !== 'Mein Profil') {
+    return profileStore.displayName
+  }
+
+  if (!authStore.user) {
+    return 'Mein Profil'
+  }
+
+  return `${authStore.user.firstName} ${authStore.user.lastName}`.trim()
+})
+
+const userInitials = computed(() => {
+  if (profileStore.initials !== '?') {
+    return profileStore.initials
+  }
+
+  if (!authStore.user) {
+    return 'MP'
+  }
+
+  return `${authStore.user.firstName[0] ?? ''}${authStore.user.lastName[0] ?? ''}`.toUpperCase()
+})
+
+onMounted(() => {
+  if (authStore.user && !profileStore.firstName && !profileStore.lastName) {
+    profileStore.setName(authStore.user.firstName, authStore.user.lastName)
+  }
+})
+
+function logout() {
+  authStore.logout()
+  closeMobileMenu()
+  void router.push({ name: 'auth' })
+}
 </script>
 
 <template>
@@ -165,15 +204,13 @@ watch(
         active-class="sidebar-user--active"
         @click="closeMobileMenu"
       >
-        <div class="sidebar-user-avatar">{{ profileStore.initials }}</div>
+        <div class="sidebar-user-avatar">{{ userInitials }}</div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">{{ profileStore.displayName }}</div>
+          <div class="sidebar-user-name">{{ displayName }}</div>
           <div class="sidebar-user-plan">Free Plan</div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
       </RouterLink>
+      <button class="sidebar-promo-btn" type="button" @click="logout">Abmelden</button>
     </aside>
 
     <main class="content">

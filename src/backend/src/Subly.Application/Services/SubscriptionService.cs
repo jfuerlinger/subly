@@ -7,12 +7,14 @@ namespace Subly.Application.Services;
 public sealed class SubscriptionService(
     ISubscriptionRepository repository,
     ICategoryRepository categoryRepository,
+    ICurrentUserProvider currentUserProvider,
     IDateProvider dateProvider) : ISubscriptionService
 {
 
     public async Task<IReadOnlyList<SubscriptionDto>> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
-        var subscriptions = await repository.ListAsync(cancellationToken);
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscriptions = await repository.ListAsync(userId, cancellationToken);
         return subscriptions
             .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .Select(ToDto)
@@ -21,16 +23,19 @@ public sealed class SubscriptionService(
 
     public async Task<SubscriptionDto?> GetSubscriptionAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var subscription = await repository.GetByIdAsync(id, cancellationToken);
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
         return subscription is null ? null : ToDto(subscription);
     }
 
     public async Task<SubscriptionDto> CreateSubscriptionAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken = default)
     {
+        var userId = currentUserProvider.GetRequiredUserId();
         await ValidateRequestAsync(request, cancellationToken);
 
         var initialStatus = request.CancelledAt.HasValue ? SubscriptionStatus.Cancelled : SubscriptionStatus.Active;
         var subscription = Subscription.Create(
+            userId,
             request.Name,
             request.Vendor,
             request.Category.ToLowerInvariant(),
@@ -50,7 +55,8 @@ public sealed class SubscriptionService(
 
     public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, DateOnly? cancelledAt, CancellationToken cancellationToken = default)
     {
-        var subscription = await repository.GetByIdAsync(id, cancellationToken);
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
         if (subscription is null)
         {
             return null;
@@ -67,7 +73,8 @@ public sealed class SubscriptionService(
 
     public async Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var deleted = await repository.DeleteAsync(id, cancellationToken);
+        var userId = currentUserProvider.GetRequiredUserId();
+        var deleted = await repository.DeleteAsync(id, userId, cancellationToken);
         if (!deleted)
         {
             return false;
@@ -79,7 +86,8 @@ public sealed class SubscriptionService(
 
     public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken cancellationToken = default)
     {
-        var subscriptions = await repository.ListAsync(cancellationToken);
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscriptions = await repository.ListAsync(userId, cancellationToken);
         var activeSubscriptions = subscriptions.Where(x => x.Status is SubscriptionStatus.Active).ToArray();
         var today = dateProvider.Today;
         var end = today.AddDays(30);

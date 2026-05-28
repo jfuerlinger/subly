@@ -8,6 +8,8 @@ namespace Subly.Application.Tests;
 
 public sealed class SubscriptionServiceTests
 {
+    private static readonly Guid CurrentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OtherUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly string[] DefaultCategories = ["streaming", "software", "insurance", "telecom", "energy", "fitness", "news", "cloud", "membership"];
 
     [Fact]
@@ -16,11 +18,16 @@ public sealed class SubscriptionServiceTests
         var now = new DateOnly(2026, 5, 16);
         var repository = new InMemorySubscriptionRepository(
         [
-            Subscription.Create("Netflix", "Netflix", "streaming", 17.99m, BillingCycle.Monthly, now.AddDays(5), "Visa", now.AddYears(-1)),
-            Subscription.Create("Prime", "Amazon", "streaming", 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
-            Subscription.Create("Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), status: SubscriptionStatus.Paused),
+            Subscription.Create(CurrentUserId, "Netflix", "Netflix", "streaming", 17.99m, BillingCycle.Monthly, now.AddDays(5), "Visa", now.AddYears(-1)),
+            Subscription.Create(CurrentUserId, "Prime", "Amazon", "streaming", 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
+            Subscription.Create(CurrentUserId, "Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), status: SubscriptionStatus.Paused),
+            Subscription.Create(OtherUserId, "Other", "Provider", "software", 12m, BillingCycle.Monthly, now.AddDays(4), "Visa", now.AddMonths(-3)),
         ]);
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
 
         var summary = await service.GetDashboardSummaryAsync();
 
@@ -36,7 +43,11 @@ public sealed class SubscriptionServiceTests
     {
         var now = new DateOnly(2026, 5, 16);
         var repository = new InMemorySubscriptionRepository();
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
         var request = new CreateSubscriptionRequest(
             Name: "ChatGPT Plus",
             Vendor: "OpenAI",
@@ -49,19 +60,24 @@ public sealed class SubscriptionServiceTests
             CancelledAt: null);
 
         var created = await service.CreateSubscriptionAsync(request);
-        var stored = await repository.GetByIdAsync(created.Id);
+        var stored = await repository.GetByIdAsync(created.Id, CurrentUserId);
 
         created.Name.Should().Be("ChatGPT Plus");
         created.Status.Should().Be(SubscriptionStatus.Active);
         stored.Should().NotBeNull();
         stored!.StartedAt.Should().Be(now.AddMonths(-2));
+        stored.UserId.Should().Be(CurrentUserId);
     }
 
     [Fact]
     public async Task UpdateStatusAsync_ShouldReturnNull_WhenSubscriptionDoesNotExist()
     {
         var repository = new InMemorySubscriptionRepository();
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(new DateOnly(2026, 5, 16)));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
         var result = await service.UpdateStatusAsync(Guid.NewGuid(), SubscriptionStatus.Cancelled, null);
 
@@ -72,9 +88,13 @@ public sealed class SubscriptionServiceTests
     public async Task UpdateStatusAsync_ShouldSetCancelledDateToToday_WhenNoDateIsProvided()
     {
         var now = new DateOnly(2026, 5, 16);
-        var existing = Subscription.Create("Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
         var repository = new InMemorySubscriptionRepository([existing]);
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
 
         var updated = await service.UpdateStatusAsync(existing.Id, SubscriptionStatus.Cancelled, null);
 
@@ -86,12 +106,16 @@ public sealed class SubscriptionServiceTests
     [Fact]
     public async Task DeleteSubscriptionAsync_ShouldRemoveExistingSubscription()
     {
-        var existing = Subscription.Create("Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));
         var repository = new InMemorySubscriptionRepository([existing]);
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(new DateOnly(2026, 5, 16)));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
         var deleted = await service.DeleteSubscriptionAsync(existing.Id);
-        var afterDelete = await repository.GetByIdAsync(existing.Id);
+        var afterDelete = await repository.GetByIdAsync(existing.Id, CurrentUserId);
 
         deleted.Should().BeTrue();
         afterDelete.Should().BeNull();
@@ -103,19 +127,30 @@ public sealed class SubscriptionServiceTests
         var now = new DateOnly(2026, 5, 16);
         var repository = new InMemorySubscriptionRepository(
         [
-            Subscription.Create("Zeta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
-            Subscription.Create("Alpha", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(CurrentUserId, "Zeta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(CurrentUserId, "Alpha", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(OtherUserId, "Beta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
         ]);
-        var service = new SubscriptionService(repository, new InMemoryCategoryRepository(DefaultCategories), new FixedDateProvider(now));
+        var service = new SubscriptionService(
+            repository,
+            new InMemoryCategoryRepository(DefaultCategories),
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
 
         var result = await service.GetSubscriptionsAsync();
 
         result.Select(x => x.Name).Should().ContainInOrder("Alpha", "Zeta");
+        result.Should().OnlyContain(x => x.Name != "Beta");
     }
 
     private sealed class FixedDateProvider(DateOnly today) : IDateProvider
     {
         public DateOnly Today => today;
+    }
+
+    private sealed class FixedCurrentUserProvider(Guid userId) : ICurrentUserProvider
+    {
+        public Guid GetRequiredUserId() => userId;
     }
 
     private sealed class InMemorySubscriptionRepository(IEnumerable<Subscription>? seed = null) : ISubscriptionRepository
@@ -128,9 +163,9 @@ public sealed class SubscriptionServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        public Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
         {
-            var removed = _items.RemoveAll(x => x.Id == id) > 0;
+            var removed = _items.RemoveAll(x => x.Id == id && x.UserId == userId) > 0;
             return Task.FromResult(removed);
         }
 
@@ -140,14 +175,14 @@ public sealed class SubscriptionServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<Subscription?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public Task<Subscription?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_items.SingleOrDefault(x => x.Id == id));
+            return Task.FromResult(_items.SingleOrDefault(x => x.Id == id && x.UserId == userId));
         }
 
-        public Task<IReadOnlyList<Subscription>> ListAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<Subscription>> ListAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IReadOnlyList<Subscription>>(_items);
+            return Task.FromResult<IReadOnlyList<Subscription>>(_items.Where(x => x.UserId == userId).ToList());
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)

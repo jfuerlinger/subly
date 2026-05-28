@@ -8,6 +8,8 @@ public sealed class Subscription
 
     public Guid Id { get; private set; }
 
+    public Guid UserId { get; private set; }
+
     public string Name { get; private set; } = string.Empty;
 
     public string Vendor { get; private set; } = string.Empty;
@@ -31,6 +33,7 @@ public sealed class Subscription
     public DateOnly? CancelledAt { get; private set; }
 
     public static Subscription Create(
+        Guid userId,
         string name,
         string vendor,
         string category,
@@ -43,6 +46,11 @@ public sealed class Subscription
         SubscriptionStatus status = SubscriptionStatus.Active,
         bool autoRenew = true)
     {
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException("User ID is required.", nameof(userId));
+        }
+
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("Name is required.", nameof(name));
@@ -86,6 +94,7 @@ public sealed class Subscription
         return new Subscription
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             Name = name.Trim(),
             Vendor = vendor.Trim(),
             Category = category.Trim(),

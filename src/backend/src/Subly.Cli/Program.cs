@@ -2,6 +2,8 @@
 using Subly.Cli.Commands;
 
 var result = await Parser.Default.ParseArguments(args,
+    typeof(AuthRegisterCommand),
+    typeof(AuthLoginCommand),
     typeof(SubscriptionListCommand),
     typeof(SubscriptionGetCommand),
     typeof(SubscriptionCreateCommand),
@@ -13,6 +15,8 @@ var result = await Parser.Default.ParseArguments(args,
     typeof(DatabaseResetCommand),
     typeof(CategoryRenameCommand))
     .MapResult(
+        async (AuthRegisterCommand cmd) => await cmd.Execute(),
+        async (AuthLoginCommand cmd) => await cmd.Execute(),
         async (SubscriptionListCommand cmd) => await cmd.Execute(),
         async (SubscriptionGetCommand cmd) => await cmd.Execute(),
         async (SubscriptionCreateCommand cmd) => await cmd.Execute(),

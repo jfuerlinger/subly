@@ -1,50 +1,79 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { hasValidAccessToken } from '../auth/tokenStorage'
 
 const routes = [
   {
     path: '/',
-    redirect: '/dashboard',
+    redirect: '/auth',
+  },
+  {
+    path: '/auth',
+    name: 'auth',
+    component: () => import('../../views/AuthView.vue'),
+    meta: { requiresAuth: false },
   },
   {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('../../views/DashboardView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/subscriptions',
     name: 'subscriptions',
     component: () => import('../../views/SubscriptionsView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/calendar',
     name: 'calendar',
     component: () => import('../../views/CalendarView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/analytics',
     name: 'analytics',
     component: () => import('../../views/AnalyticsView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/categories',
     name: 'categories',
     component: () => import('../../views/CategoriesView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',
     name: 'settings',
     component: () => import('../../views/SettingsView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/profile',
     name: 'profile',
     component: () => import('../../views/ProfileSettingsView.vue'),
+    meta: { requiresAuth: true },
   },
 ]
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const authenticated = hasValidAccessToken()
+  const requiresAuth = to.meta.requiresAuth === true
+
+  if (requiresAuth && !authenticated) {
+    return { name: 'auth' }
+  }
+
+  if (to.name === 'auth' && authenticated) {
+    return { name: 'dashboard' }
+  }
+
+  return true
 })
 
 const dynamicImportFetchError = 'Failed to fetch dynamically imported module'

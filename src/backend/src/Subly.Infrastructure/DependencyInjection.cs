@@ -5,6 +5,7 @@ using Subly.Application.Abstractions;
 using Subly.Application.Services;
 using Subly.Infrastructure.Persistence;
 using Subly.Infrastructure.Persistence.Repositories;
+using Subly.Infrastructure.Security;
 using Subly.Infrastructure.Seeding;
 using Subly.Infrastructure.Services;
 
@@ -23,6 +24,9 @@ public static class DependencyInjection
 
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddScoped<ICategoryRepository, EfCategoryRepository>();
+        services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<IDateProvider, SystemDateProvider>();
         services.AddScoped<IAdminService, AdminService>();
 
