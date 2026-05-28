@@ -123,6 +123,38 @@ public class SubscriptionApiClient
         }
     }
 
+    public async Task<SubscriptionDto?> UpdateAsync(Guid id, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"/api/subscriptions/{id}", content, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                Console.Error.WriteLine($"Subscription with ID {id} not found");
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                Console.Error.WriteLine($"Error: {response.StatusCode}");
+                Console.Error.WriteLine(errorContent);
+                return null;
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<SubscriptionDto>(responseContent, JsonSerializerOptionsProvider.Web);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error updating subscription: {ex.Message}");
+            return null;
+        }
+    }
+
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
