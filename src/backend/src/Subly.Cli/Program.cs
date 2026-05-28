@@ -11,7 +11,9 @@ var result = await Parser.Default.ParseArguments(args,
     typeof(SubscriptionDeleteCommand),
     typeof(DashboardSummaryCommand),
     typeof(CategoryListCommand),
-    typeof(CategoryCreateCommand))
+    typeof(CategoryCreateCommand),
+    typeof(DatabaseResetCommand),
+    typeof(CategoryRenameCommand))
     .MapResult(
         async (AuthRegisterCommand cmd) => await cmd.Execute(),
         async (AuthLoginCommand cmd) => await cmd.Execute(),
@@ -23,6 +25,8 @@ var result = await Parser.Default.ParseArguments(args,
         async (DashboardSummaryCommand cmd) => await cmd.Execute(),
         async (CategoryListCommand cmd) => await cmd.Execute(),
         async (CategoryCreateCommand cmd) => await cmd.Execute(),
+        async (DatabaseResetCommand cmd) => await cmd.Execute(),
+        async (CategoryRenameCommand cmd) => await cmd.Execute(),
         errors => Task.FromResult(1));
 
 Environment.Exit(result);

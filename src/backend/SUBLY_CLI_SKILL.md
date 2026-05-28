@@ -228,6 +228,39 @@ dotnet run --project src/Subly.Cli -- category-create --name "Education" --token
 
 ---
 
+## Admin Commands
+
+### Fully Reset Database
+
+Deletes the entire database, reapplies all migrations, and reseeds the default data.
+
+```bash
+dotnet run --project src/Subly.Cli -- database-reset
+```
+
+**Options:**
+- `--yes` or `-y`: Skip confirmation
+- `--api-url` or `-u`: Base API URL (default: `http://localhost:5000`)
+
+**Example (without confirmation):**
+```bash
+dotnet run --project src/Subly.Cli -- database-reset --yes
+```
+
+### Rename Category
+
+Rename an existing subscription category.
+
+```bash
+dotnet run --project src/Subly.Cli -- category-rename --id <category-id> --name "New Name"
+```
+
+**Options:**
+- `--id` or `-i` (required): Category ID (GUID)
+- `--name` or `-n` (required): New category name
+
+---
+
 ## Examples
 
 ### Complete Workflow
@@ -306,6 +339,8 @@ Exit codes:
 | GET /api/dashboard/summary | dashboard-summary |
 | GET /api/categories | category-list |
 | POST /api/categories | category-create |
+| POST /api/admin/reset-database | database-reset |
+| PATCH /api/categories/{id}/name | category-rename |
 
 ---
 

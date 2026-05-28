@@ -17,6 +17,27 @@ public sealed class AdminEndpointsTests(CustomWebApplicationFactory factory) : I
     };
 
     [Fact]
+    public async Task ResetDatabase_ShouldReturn200AndIncludeStepSummary()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/admin/reset-database", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var resetSummary = await response.Content.ReadFromJsonAsync<DatabaseResetResultDto>(JsonOptions);
+        resetSummary.Should().NotBeNull();
+        resetSummary!.Steps.Should().ContainInOrder(
+            "Vorhandene Datenbank gelöscht",
+            "Migrationen erneut angewendet",
+            "Seed-Daten neu eingespielt");
+
+        var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+        subscriptions.Should().NotBeNull();
+        subscriptions.Should().NotBeEmpty();
+    }
+
+    [Fact]
     public async Task DeleteAllData_ShouldReturn204AndLeaveEmptyRepository()
     {
         var client = factory.CreateClient();

@@ -200,6 +200,11 @@ public sealed class SubscriptionServiceTests
             return Task.FromResult<IReadOnlyList<Category>>(_items);
         }
 
+        public Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_items.SingleOrDefault(c => c.Id == id));
+        }
+
         public Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_items.SingleOrDefault(c => c.Name == name));

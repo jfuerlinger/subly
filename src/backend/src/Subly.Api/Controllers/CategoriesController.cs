@@ -19,13 +19,33 @@ public sealed class CategoriesController(ICategoryService service) : ControllerB
     [HttpPost]
     [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var created = await service.CreateCategoryAsync(request.Name, cancellationToken);
             return CreatedAtAction(nameof(GetAll), created);
+        }
+        catch (ArgumentException exception)
+        {
+            return ValidationProblem(detail: exception.Message);
+        }
+    }
+
+    [HttpPatch("{id:guid}/name")]
+    [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CategoryDto>> Rename(Guid id, [FromBody] RenameCategoryRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await service.RenameCategoryAsync(id, request.Name, cancellationToken);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { detail = exception.Message });
         }
         catch (ArgumentException exception)
         {

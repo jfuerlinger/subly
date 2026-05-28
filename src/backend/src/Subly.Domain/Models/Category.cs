@@ -18,4 +18,12 @@ public sealed class Category
             Name = name.Trim().ToLowerInvariant(),
         };
     }
+
+    public void Rename(string newName)
+    {
+        if (string.IsNullOrWhiteSpace(newName))
+            throw new ArgumentException("Category name is required.", nameof(newName));
+
+        Name = newName.Trim().ToLowerInvariant();
+    }
 }

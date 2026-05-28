@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../app/stores/authStore'
+import { useProfileStore } from '../../app/stores/profileStore'
 
 interface NavItem {
   to: string
@@ -24,32 +25,93 @@ const systemNav: NavItem[] = [
 
 const authStore = useAuthStore()
 const router = useRouter()
+const profileStore = useProfileStore()
+
+const route = useRoute()
+const isMobileMenuOpen = ref(false)
+const mobileNavigationId = 'primary-navigation'
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isMobileMenuOpen.value) {
+    closeMobileMenu()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMobileMenu()
+  },
+)
 
 const displayName = computed(() => {
+  if (profileStore.displayName !== 'Mein Profil') {
+    return profileStore.displayName
+  }
+
   if (!authStore.user) {
-    return 'Gast'
+    return 'Mein Profil'
   }
 
   return `${authStore.user.firstName} ${authStore.user.lastName}`.trim()
 })
 
 const userInitials = computed(() => {
+  if (profileStore.initials !== '?') {
+    return profileStore.initials
+  }
+
   if (!authStore.user) {
-    return 'GU'
+    return 'MP'
   }
 
   return `${authStore.user.firstName[0] ?? ''}${authStore.user.lastName[0] ?? ''}`.toUpperCase()
 })
 
+onMounted(() => {
+  if (authStore.user && !profileStore.firstName && !profileStore.lastName) {
+    profileStore.setName(authStore.user.firstName, authStore.user.lastName)
+  }
+})
+
 function logout() {
   authStore.logout()
+  closeMobileMenu()
   void router.push({ name: 'auth' })
 }
 </script>
 
 <template>
-  <div class="app-shell">
-    <aside class="sidebar">
+  <div class="app-shell" :class="{ 'app-shell--menu-open': isMobileMenuOpen }">
+    <button
+      type="button"
+      class="mobile-nav-backdrop"
+      :class="{ 'mobile-nav-backdrop--visible': isMobileMenuOpen }"
+      aria-label="Menü schließen"
+      @click="closeMobileMenu"
+    />
+
+    <aside
+      class="sidebar"
+      :class="{ 'sidebar--open': isMobileMenuOpen }"
+      :id="mobileNavigationId"
+    >
       <!-- Brand -->
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon">S</div>
@@ -68,6 +130,7 @@ function logout() {
           :to="item.to"
           class="nav-link"
           active-class="nav-link-active"
+          @click="closeMobileMenu"
         >
           <!-- Grid icon -->
           <svg v-if="item.icon === 'grid'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -110,6 +173,7 @@ function logout() {
           :to="item.to"
           class="nav-link"
           active-class="nav-link-active"
+          @click="closeMobileMenu"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -134,17 +198,63 @@ function logout() {
       </div>
 
       <!-- User -->
-      <div class="sidebar-user">
+      <RouterLink
+        to="/profile"
+        class="sidebar-user"
+        active-class="sidebar-user--active"
+        @click="closeMobileMenu"
+      >
         <div class="sidebar-user-avatar">{{ userInitials }}</div>
         <div class="sidebar-user-info">
           <div class="sidebar-user-name">{{ displayName }}</div>
           <div class="sidebar-user-plan">Free Plan</div>
         </div>
-        <button class="sidebar-promo-btn" type="button" @click="logout">Abmelden</button>
-      </div>
+      </RouterLink>
+      <button class="sidebar-promo-btn" type="button" @click="logout">Abmelden</button>
     </aside>
 
     <main class="content">
+      <header class="mobile-topbar">
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          :aria-expanded="isMobileMenuOpen"
+          :aria-controls="mobileNavigationId"
+          :aria-label="isMobileMenuOpen ? 'Menü schließen' : 'Menü öffnen'"
+          @click="toggleMobileMenu"
+        >
+          <svg
+            v-if="!isMobileMenuOpen"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          <svg
+            v-else
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <RouterLink class="mobile-topbar-brand" to="/dashboard">Subly</RouterLink>
+      </header>
       <slot />
     </main>
   </div>
