@@ -269,6 +269,7 @@ const processedSubscriptions = computed(() => {
                 v-for="status in subscriptionStatusOptions"
                 :key="status.value"
                 type="button"
+                :disabled="status.value === subscription.status"
                 @click="handleStatusChange(subscription, status.value)"
               >
                 {{ status.label }}

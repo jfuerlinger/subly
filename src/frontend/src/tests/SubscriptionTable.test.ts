@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/vue'
+import { fireEvent, render, screen, within } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import type { Subscription } from '../app/types/subscription'
 import SubscriptionTable from '../components/subscriptions/SubscriptionTable.vue'
@@ -79,5 +79,36 @@ describe('SubscriptionTable', () => {
     expect(screen.getByText('Netflix')).toBeInTheDocument()
     expect(screen.getByText('Spotify')).toBeInTheDocument()
     expect(screen.queryByText('Disney+')).not.toBeInTheDocument()
+  })
+
+  it('disables status action that matches current subscription status', async () => {
+    const { emitted } = render(SubscriptionTable, {
+      props: {
+        subscriptions,
+      },
+    })
+
+    const netflixRow = screen.getByText('Netflix').closest('tr')
+    const spotifyRow = screen.getByText('Spotify').closest('tr')
+    const disneyRow = screen.getByText('Disney+').closest('tr')
+
+    expect(netflixRow).not.toBeNull()
+    expect(spotifyRow).not.toBeNull()
+    expect(disneyRow).not.toBeNull()
+
+    const netflixButtons = within(netflixRow as HTMLElement)
+    const spotifyButtons = within(spotifyRow as HTMLElement)
+    const disneyButtons = within(disneyRow as HTMLElement)
+
+    const netflixActive = netflixButtons.getByRole('button', { name: 'Aktiv' })
+    const spotifyPaused = spotifyButtons.getByRole('button', { name: 'Pausiert' })
+    const disneyCancelled = disneyButtons.getByRole('button', { name: 'Gekündigt' })
+
+    expect(netflixActive).toBeDisabled()
+    expect(spotifyPaused).toBeDisabled()
+    expect(disneyCancelled).toBeDisabled()
+
+    await fireEvent.click(netflixButtons.getByRole('button', { name: 'Pausiert' }))
+    expect(emitted().updateStatus).toEqual([['sub-1', 'paused']])
   })
 })
