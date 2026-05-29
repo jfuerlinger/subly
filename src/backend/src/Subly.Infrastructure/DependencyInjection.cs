@@ -37,6 +37,7 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SublyDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
         if (dbContext.Database.IsRelational())
             await dbContext.Database.MigrateAsync(cancellationToken);
@@ -45,7 +46,7 @@ public static class DependencyInjection
 
         if (seed)
         {
-            await SublyDataSeeder.SeedAsync(dbContext, cancellationToken);
+            await SublyDataSeeder.SeedAsync(dbContext, passwordHasher, cancellationToken);
         }
     }
 
@@ -53,8 +54,9 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SublyDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         await dbContext.Database.EnsureDeletedAsync(cancellationToken);
         await dbContext.Database.MigrateAsync(cancellationToken);
-        await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
+        await SublyDataSeeder.ForceSeedAsync(dbContext, passwordHasher, cancellationToken);
     }
 }

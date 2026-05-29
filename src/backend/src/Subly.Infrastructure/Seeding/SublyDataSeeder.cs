@@ -1,3 +1,4 @@
+using Subly.Application.Abstractions;
 using Subly.Domain.Models;
 using Subly.Infrastructure.Persistence;
 
@@ -8,9 +9,7 @@ public static class SublyDataSeeder
     private const string DemoUserFirstName = "Max";
     private const string DemoUserLastName = "Muster";
     private const string DemoUserEmail = "demo@subly.local";
-    private const string DemoUserPasswordHashBase64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-    private const string DemoUserPasswordSaltBase64 = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=";
-    private const int DemoUserPasswordIterations = 100_000;
+    public const string DemoUserPassword = "Demo1234!";
 
     private static readonly string[] DefaultCategories =
     [
@@ -25,7 +24,7 @@ public static class SublyDataSeeder
         "membership",
     ];
 
-    public static async Task SeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(SublyDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken = default)
     {
         await SeedCategoriesAsync(dbContext, cancellationToken);
         if (dbContext.Subscriptions.Any())
@@ -33,14 +32,14 @@ public static class SublyDataSeeder
             return;
         }
 
-        await ForceSeedAsync(dbContext, cancellationToken);
+        await ForceSeedAsync(dbContext, passwordHasher, cancellationToken);
     }
 
-    public static async Task ForceSeedAsync(SublyDbContext dbContext, CancellationToken cancellationToken = default)
+    public static async Task ForceSeedAsync(SublyDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken = default)
     {
         await SeedCategoriesAsync(dbContext, cancellationToken);
 
-        var demoUser = await EnsureDemoUserAsync(dbContext, cancellationToken);
+        var demoUser = await EnsureDemoUserAsync(dbContext, passwordHasher, cancellationToken);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var data = new[]
@@ -70,7 +69,7 @@ public static class SublyDataSeeder
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static async Task<User> EnsureDemoUserAsync(SublyDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<User> EnsureDemoUserAsync(SublyDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken)
     {
         var normalizedEmail = User.NormalizeEmail(DemoUserEmail);
         var existingUser = dbContext.Users.SingleOrDefault(x => x.Email == normalizedEmail);
@@ -79,13 +78,14 @@ public static class SublyDataSeeder
             return existingUser;
         }
 
+        var hashedPassword = passwordHasher.Hash(DemoUserPassword);
         var user = User.Create(
             DemoUserFirstName,
             DemoUserLastName,
             normalizedEmail,
-            DemoUserPasswordHashBase64,
-            DemoUserPasswordSaltBase64,
-            DemoUserPasswordIterations);
+            hashedPassword.HashBase64,
+            hashedPassword.SaltBase64,
+            hashedPassword.Iterations);
 
         await dbContext.Users.AddAsync(user, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);

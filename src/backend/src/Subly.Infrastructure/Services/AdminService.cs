@@ -7,7 +7,7 @@ using Subly.Infrastructure.Seeding;
 
 namespace Subly.Infrastructure.Services;
 
-public sealed class AdminService(ISubscriptionRepository subscriptionRepository, SublyDbContext dbContext) : IAdminService
+public sealed class AdminService(ISubscriptionRepository subscriptionRepository, SublyDbContext dbContext, IPasswordHasher passwordHasher) : IAdminService
 {
     public async Task DeleteAllDataAsync(CancellationToken cancellationToken = default)
     {
@@ -18,7 +18,7 @@ public sealed class AdminService(ISubscriptionRepository subscriptionRepository,
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await subscriptionRepository.DeleteAllAsync(cancellationToken);
-        await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
+        await SublyDataSeeder.ForceSeedAsync(dbContext, passwordHasher, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -36,7 +36,7 @@ public sealed class AdminService(ISubscriptionRepository subscriptionRepository,
 
         steps.Add("Migrationen erneut angewendet");
 
-        await SublyDataSeeder.ForceSeedAsync(dbContext, cancellationToken);
+        await SublyDataSeeder.ForceSeedAsync(dbContext, passwordHasher, cancellationToken);
         steps.Add("Seed-Daten neu eingespielt");
 
         return new DatabaseResetResultDto(steps, DateTimeOffset.UtcNow);
