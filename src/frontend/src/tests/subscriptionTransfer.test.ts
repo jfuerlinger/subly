@@ -9,6 +9,7 @@ const sampleSubscription: Subscription = {
   id: 'sub-1',
   name: 'Netflix',
   vendor: 'Netflix',
+  logoUrl: null,
   category: 'streaming',
   price: 17.99,
   cycle: 'monthly',

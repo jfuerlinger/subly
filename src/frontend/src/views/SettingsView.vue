@@ -207,6 +207,7 @@ async function handleImport(mode: ImportMode) {
       const created = await createSubscription({
         name: subscription.name,
         vendor: subscription.vendor,
+        logoUrl: subscription.logoUrl,
         category: normalizeCategoryName(subscription.category),
         price: subscription.price,
         cycle: subscription.cycle,

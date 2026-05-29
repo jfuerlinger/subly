@@ -80,6 +80,7 @@ function parseImportItem(item: unknown, index: number): ImportSubscriptionItem {
   return {
     name: readRequiredString(item.name, 'name', index),
     vendor: readRequiredString(item.vendor, 'vendor', index),
+    logoUrl: readNullableString(item.logoUrl, 'logoUrl', index),
     category: readRequiredString(item.category, 'category', index),
     price: readPositiveNumber(item.price, 'price', index),
     cycle: readBillingCycle(item.cycle, index),
@@ -97,6 +98,18 @@ function readRequiredString(value: unknown, field: string, index: number): strin
   }
 
   return value.trim()
+}
+
+function readNullableString(value: unknown, field: string, index: number): string | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error(`Feld "${field}" muss ein String sein (Eintrag ${index + 1}).`)
+  }
+
+  return value.trim() === '' ? null : value.trim()
 }
 
 function readPositiveNumber(value: unknown, field: string, index: number): number {
