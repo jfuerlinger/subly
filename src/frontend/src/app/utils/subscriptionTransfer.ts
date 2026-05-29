@@ -80,6 +80,7 @@ function parseImportItem(item: unknown, index: number): ImportSubscriptionItem {
   return {
     name: readRequiredString(item.name, 'name', index),
     vendor: readRequiredString(item.vendor, 'vendor', index),
+    logoUrl: readOptionalString(item.logoUrl),
     category: readRequiredString(item.category, 'category', index),
     price: readPositiveNumber(item.price, 'price', index),
     cycle: readBillingCycle(item.cycle, index),
@@ -89,6 +90,18 @@ function parseImportItem(item: unknown, index: number): ImportSubscriptionItem {
     cancelledAt,
     status: readStatus(item.status, cancelledAt, index),
   }
+}
+
+function readOptionalString(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') {
+    return null
+  }
+
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+
+  return null
 }
 
 function readRequiredString(value: unknown, field: string, index: number): string {
