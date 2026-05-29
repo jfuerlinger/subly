@@ -109,7 +109,8 @@ function readNullableString(value: unknown, field: string, index: number): strin
     throw new Error(`Feld "${field}" muss ein String sein (Eintrag ${index + 1}).`)
   }
 
-  return value.trim() === '' ? null : value.trim()
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
 }
 
 function readPositiveNumber(value: unknown, field: string, index: number): number {

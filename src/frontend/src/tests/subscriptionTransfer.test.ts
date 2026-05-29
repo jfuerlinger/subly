@@ -65,6 +65,41 @@ describe('subscriptionTransfer', () => {
     expect(result[0].cancelledAt).toBe('2026-05-01')
   })
 
+  it('parses nullable and missing logoUrl values as null', () => {
+    const json = JSON.stringify([
+      {
+        ...sampleSubscription,
+        logoUrl: null,
+      },
+      {
+        ...sampleSubscription,
+        logoUrl: '',
+      },
+      {
+        ...sampleSubscription,
+      },
+    ])
+
+    const result = parseSubscriptionImportPayload(json)
+
+    expect(result[0].logoUrl).toBeNull()
+    expect(result[1].logoUrl).toBeNull()
+    expect(result[2].logoUrl).toBeNull()
+  })
+
+  it('throws when logoUrl is not a string', () => {
+    const json = JSON.stringify([
+      {
+        ...sampleSubscription,
+        logoUrl: 42,
+      },
+    ])
+
+    expect(() => parseSubscriptionImportPayload(json)).toThrow(
+      'Feld "logoUrl" muss ein String sein (Eintrag 1).',
+    )
+  })
+
   it('throws on invalid billing cycle', () => {
     const json = JSON.stringify([
       {
