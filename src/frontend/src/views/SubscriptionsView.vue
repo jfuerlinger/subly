@@ -95,7 +95,7 @@ onMounted(async () => {
       </div>
     </header>
 
-    <section class="card">
+    <section class="card" data-tour="subscriptions-list">
       <h2>Abos</h2>
       <SubscriptionTable
         :subscriptions="store.subscriptions"

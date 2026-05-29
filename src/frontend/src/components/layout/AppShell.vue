@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { AxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../app/stores/authStore'
 import { useProfileStore } from '../../app/stores/profileStore'
+import { useSubscriptionStore } from '../../app/stores/subscriptionStore'
+import { buildDemoSubscriptions } from '../../app/onboarding/demoSubscriptions'
+import {
+  clearOnboardingPending,
+  isDemoDataSeeded,
+  isOnboardingPending,
+  isTourCompleted,
+  markDemoDataSeeded,
+  markTourCompleted,
+} from '../../app/onboarding/onboardingStorage'
+import OnboardingTour from '../onboarding/OnboardingTour.vue'
 
 interface NavItem {
   to: string
@@ -26,10 +38,17 @@ const systemNav: NavItem[] = [
 const authStore = useAuthStore()
 const router = useRouter()
 const profileStore = useProfileStore()
+const subscriptionStore = useSubscriptionStore()
 
 const route = useRoute()
 const isMobileMenuOpen = ref(false)
 const mobileNavigationId = 'primary-navigation'
+const showOnboardingPrompt = ref(false)
+const wantsDemoData = ref(true)
+const wantsWalkthrough = ref(true)
+const onboardingError = ref<string | null>(null)
+const onboardingLoading = ref(false)
+const showWalkthrough = ref(false)
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -88,12 +107,105 @@ onMounted(() => {
   if (authStore.user && !profileStore.firstName && !profileStore.lastName) {
     profileStore.setName(authStore.user.firstName, authStore.user.lastName)
   }
+
+  openOnboardingPromptIfNeeded(authStore.user?.id ?? null)
 })
+
+watch(
+  () => authStore.user?.id ?? null,
+  (userId) => {
+    openOnboardingPromptIfNeeded(userId)
+  },
+)
+
+watch(
+  () => route.name,
+  (currentRouteName) => {
+    if (currentRouteName !== 'auth') {
+      openOnboardingPromptIfNeeded(authStore.user?.id ?? null)
+    }
+  },
+)
 
 function logout() {
   authStore.logout()
   closeMobileMenu()
   void router.push({ name: 'auth' })
+}
+
+function openOnboardingPromptIfNeeded(userId: string | null): void {
+  if (!userId || route.name === 'auth' || !isOnboardingPending(userId)) {
+    return
+  }
+
+  wantsDemoData.value = !isDemoDataSeeded(userId)
+  wantsWalkthrough.value = !isTourCompleted(userId)
+  onboardingError.value = null
+  showOnboardingPrompt.value = true
+}
+
+function postponeOnboarding(): void {
+  showOnboardingPrompt.value = false
+}
+
+async function applyOnboardingSelection(): Promise<void> {
+  const currentUserId = authStore.user?.id
+  if (!currentUserId || onboardingLoading.value) {
+    return
+  }
+
+  onboardingLoading.value = true
+  onboardingError.value = null
+
+  try {
+    if (wantsDemoData.value && !isDemoDataSeeded(currentUserId)) {
+      await subscriptionStore.createMany(buildDemoSubscriptions())
+      markDemoDataSeeded(currentUserId)
+    }
+
+    clearOnboardingPending(currentUserId)
+    showOnboardingPrompt.value = false
+
+    if (wantsWalkthrough.value) {
+      showWalkthrough.value = true
+      return
+    }
+
+    markTourCompleted(currentUserId)
+  } catch (error) {
+    onboardingError.value = toOnboardingError(error)
+  } finally {
+    onboardingLoading.value = false
+  }
+}
+
+function handleWalkthroughComplete(): void {
+  const currentUserId = authStore.user?.id
+  if (currentUserId) {
+    markTourCompleted(currentUserId)
+  }
+
+  showWalkthrough.value = false
+}
+
+function handleWalkthroughSkip(): void {
+  const currentUserId = authStore.user?.id
+  if (currentUserId) {
+    markTourCompleted(currentUserId)
+  }
+
+  showWalkthrough.value = false
+}
+
+function toOnboardingError(error: unknown): string {
+  if (error instanceof AxiosError) {
+    const detail = error.response?.data?.detail
+    if (typeof detail === 'string' && detail.length > 0) {
+      return detail
+    }
+  }
+
+  return 'Onboarding konnte nicht abgeschlossen werden. Bitte versuche es erneut.'
 }
 </script>
 
@@ -123,7 +235,7 @@ function logout() {
 
       <!-- Overview nav -->
       <div class="sidebar-section-label">Übersicht</div>
-      <nav class="nav">
+      <nav class="nav" data-tour="sidebar-navigation">
         <RouterLink
           v-for="item in overviewNav"
           :key="item.to"
@@ -258,4 +370,176 @@ function logout() {
       <slot />
     </main>
   </div>
+
+  <Teleport to="body">
+    <Transition name="onboarding-fade">
+      <div v-if="showOnboardingPrompt" class="onboarding-backdrop" @click.self="postponeOnboarding">
+        <section
+          class="onboarding-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboarding-title"
+        >
+          <h2 id="onboarding-title">Willkommen bei Subly</h2>
+          <p class="onboarding-intro">
+            Möchtest du den Einstieg direkt einrichten? Du kannst jetzt Demodaten anlegen und eine kurze Tour starten.
+          </p>
+
+          <div class="onboarding-choice-list">
+            <label class="onboarding-choice">
+              <input v-model="wantsDemoData" type="checkbox">
+              <span>
+                <strong>Demodaten erstellen</strong>
+                <small>Wir legen dir Beispiel-Abos an, damit du Funktionen sofort testen kannst.</small>
+              </span>
+            </label>
+
+            <label class="onboarding-choice">
+              <input v-model="wantsWalkthrough" type="checkbox">
+              <span>
+                <strong>Interaktive Tour starten</strong>
+                <small>Subly führt dich durch alle Seiten und erklärt die wichtigsten Funktionen.</small>
+              </span>
+            </label>
+          </div>
+
+          <p v-if="onboardingError" class="onboarding-error">{{ onboardingError }}</p>
+
+          <footer class="onboarding-actions">
+            <button type="button" class="onboarding-btn onboarding-btn--ghost" @click="postponeOnboarding">
+              Später
+            </button>
+            <button
+              type="button"
+              class="onboarding-btn onboarding-btn--primary"
+              :disabled="onboardingLoading"
+              @click="applyOnboardingSelection"
+            >
+              {{ onboardingLoading ? 'Wird eingerichtet…' : 'Auswahl übernehmen' }}
+            </button>
+          </footer>
+        </section>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <OnboardingTour
+    :active="showWalkthrough"
+    @complete="handleWalkthroughComplete"
+    @skip="handleWalkthroughSkip"
+  />
 </template>
+
+<style scoped>
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  background: rgba(15, 23, 42, 0.58);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.onboarding-dialog {
+  width: min(560px, calc(100vw - 2rem));
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.3);
+  padding: 1.25rem;
+}
+
+.onboarding-dialog h2 {
+  margin: 0;
+}
+
+.onboarding-intro {
+  margin: 0.6rem 0 1rem;
+  color: #4b5563;
+}
+
+.onboarding-choice-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.onboarding-choice {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.onboarding-choice input {
+  margin-top: 0.2rem;
+}
+
+.onboarding-choice span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.onboarding-choice small {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.onboarding-error {
+  margin: 0.9rem 0 0;
+  color: #b91c1c;
+  font-size: 0.86rem;
+}
+
+.onboarding-actions {
+  margin-top: 1.1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.onboarding-btn {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onboarding-btn--ghost {
+  background: #fff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.onboarding-btn--ghost:hover {
+  background: #f9fafb;
+}
+
+.onboarding-btn--primary {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.onboarding-btn--primary:hover {
+  background: #4338ca;
+}
+
+.onboarding-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.onboarding-fade-enter-active,
+.onboarding-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.onboarding-fade-enter-from,
+.onboarding-fade-leave-to {
+  opacity: 0;
+}
+</style>

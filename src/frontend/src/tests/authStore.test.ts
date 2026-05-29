@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '../app/stores/authStore'
 import * as authApi from '../app/api/authApi'
+import { isOnboardingPending } from '../app/onboarding/onboardingStorage'
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -53,5 +54,28 @@ describe('authStore', () => {
 
     expect(store.isAuthenticated).toBe(false)
     expect(window.sessionStorage.getItem('subly:auth:accessToken')).toBeNull()
+  })
+
+  it('marks onboarding as pending after registration', async () => {
+    vi.spyOn(authApi, 'register').mockResolvedValue({
+      accessToken: 'jwt-token',
+      expiresAtUtc: '2099-05-28T12:00:00Z',
+      user: {
+        id: 'user-42',
+        firstName: 'Lena',
+        lastName: 'Mayer',
+        email: 'lena@example.com',
+      },
+    })
+
+    const store = useAuthStore()
+    await store.registerUser({
+      firstName: 'Lena',
+      lastName: 'Mayer',
+      email: 'lena@example.com',
+      password: 'Secure123!',
+    })
+
+    expect(isOnboardingPending('user-42')).toBe(true)
   })
 })

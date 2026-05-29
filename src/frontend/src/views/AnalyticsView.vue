@@ -25,7 +25,7 @@ onMounted(async () => {
 
     <AnalyticsKpis :subscriptions="store.subscriptions" />
 
-    <div class="analytics-grid">
+    <div class="analytics-grid" data-tour="analytics-charts">
       <SpendingTrendChart :subscriptions="store.subscriptions" />
       <PaymentForecastChart :subscriptions="store.subscriptions" />
     </div>
