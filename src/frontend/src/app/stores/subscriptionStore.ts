@@ -54,9 +54,34 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
       return
     }
 
-    const createdSubscriptions = await Promise.all(requests.map((request) => createSubscription(request)))
-    subscriptions.value = [...createdSubscriptions, ...subscriptions.value]
+    const createResults = await Promise.allSettled(
+      requests.map((request) => createSubscription(request)),
+    )
+
+    const createdSubscriptions = createResults
+      .filter((result): result is PromiseFulfilledResult<Subscription> => result.status === 'fulfilled')
+      .map((result) => result.value)
+
+    if (createdSubscriptions.length > 0) {
+      subscriptions.value = [...createdSubscriptions, ...subscriptions.value]
+    }
+
     await refreshSummary()
+
+    const failedResults = createResults.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    )
+
+    if (failedResults.length === 0) {
+      return
+    }
+
+    await initialize()
+
+    const firstErrorMessage = failedResults[0].reason instanceof Error
+      ? failedResults[0].reason.message
+      : 'Einige Demodaten konnten nicht erstellt werden.'
+    throw new Error(firstErrorMessage)
   }
 
   async function updateStatus(id: string, status: SubscriptionStatus, cancelledAt?: string | null): Promise<void> {

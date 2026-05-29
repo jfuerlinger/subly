@@ -118,6 +118,15 @@ watch(
   },
 )
 
+watch(
+  () => route.name,
+  (currentRouteName) => {
+    if (currentRouteName !== 'auth') {
+      openOnboardingPromptIfNeeded(authStore.user?.id ?? null)
+    }
+  },
+)
+
 function logout() {
   authStore.logout()
   closeMobileMenu()

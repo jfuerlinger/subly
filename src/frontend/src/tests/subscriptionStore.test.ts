@@ -117,6 +117,55 @@ describe('subscriptionStore', () => {
     expect(store.subscriptions[1].name).toBe('ChatGPT Plus')
   })
 
+  it('resyncs state when batched create partially fails', async () => {
+    const store = useSubscriptionStore()
+    const requests: NewSubscriptionRequest[] = [
+      {
+        name: 'Netflix',
+        vendor: 'Netflix',
+        logoUrl: null,
+        category: 'streaming',
+        price: 17.99,
+        cycle: 'monthly',
+        nextPaymentDate: '2026-05-20',
+        paymentMethod: 'Visa',
+        startedAt: '2024-01-01',
+        cancelledAt: null,
+      },
+      {
+        name: 'ChatGPT Plus',
+        vendor: 'OpenAI',
+        logoUrl: null,
+        category: 'software',
+        price: 22,
+        cycle: 'monthly',
+        nextPaymentDate: '2026-05-18',
+        paymentMethod: 'PayPal',
+        startedAt: '2025-01-01',
+        cancelledAt: null,
+      },
+    ]
+
+    vi.spyOn(api, 'createSubscription').mockImplementation(async (request) => {
+      if (request.name === 'ChatGPT Plus') {
+        throw new Error('create failed')
+      }
+
+      return {
+        id: request.name,
+        ...request,
+        status: 'active',
+        autoRenew: true,
+      }
+    })
+    vi.spyOn(api, 'fetchSubscriptions').mockResolvedValue([baseSubscription])
+    vi.spyOn(api, 'fetchDashboardSummary').mockResolvedValue(dashboard)
+
+    await expect(store.createMany(requests)).rejects.toThrow('create failed')
+    expect(store.subscriptions).toEqual([baseSubscription])
+    expect(store.summary).toEqual(dashboard)
+  })
+
   it('updates status in local state', async () => {
     const store = useSubscriptionStore()
     store.$patch({ subscriptions: [baseSubscription] })

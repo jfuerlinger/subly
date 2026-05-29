@@ -258,6 +258,7 @@ onBeforeUnmount(() => {
           <p class="tour-progress">Schritt {{ currentStepIndex + 1 }} von {{ totalSteps }}</p>
           <h2>{{ currentStep?.title }}</h2>
           <p>{{ currentStep?.description }}</p>
+          <p class="tour-note">Hinweis: Diese Tour ist eine gefuehrte Vorschau. Die markierten Elemente sind dabei nicht klickbar.</p>
           <p v-if="preparingStep" class="tour-loading">Inhalt wird vorbereitet…</p>
 
           <div class="tour-actions">
@@ -324,6 +325,11 @@ onBeforeUnmount(() => {
   margin: 0.55rem 0 0;
   color: #4b5563;
   font-size: 0.9rem;
+}
+
+.tour-note {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
 .tour-loading {
