@@ -74,6 +74,49 @@ describe('subscriptionStore', () => {
     expect(store.subscriptions[0].id).toBe('new-id')
   })
 
+  it('creates multiple demo subscriptions in one batch', async () => {
+    const store = useSubscriptionStore()
+    const requests: NewSubscriptionRequest[] = [
+      {
+        name: 'Netflix',
+        vendor: 'Netflix',
+        logoUrl: null,
+        category: 'streaming',
+        price: 17.99,
+        cycle: 'monthly',
+        nextPaymentDate: '2026-05-20',
+        paymentMethod: 'Visa',
+        startedAt: '2024-01-01',
+        cancelledAt: null,
+      },
+      {
+        name: 'ChatGPT Plus',
+        vendor: 'OpenAI',
+        logoUrl: null,
+        category: 'software',
+        price: 22,
+        cycle: 'monthly',
+        nextPaymentDate: '2026-05-18',
+        paymentMethod: 'PayPal',
+        startedAt: '2025-01-01',
+        cancelledAt: null,
+      },
+    ]
+
+    vi.spyOn(api, 'createSubscription').mockImplementation(async (request) => ({
+      id: request.name,
+      ...request,
+      status: 'active',
+      autoRenew: true,
+    }))
+
+    await store.createMany(requests)
+
+    expect(store.subscriptions).toHaveLength(2)
+    expect(store.subscriptions[0].name).toBe('Netflix')
+    expect(store.subscriptions[1].name).toBe('ChatGPT Plus')
+  })
+
   it('updates status in local state', async () => {
     const store = useSubscriptionStore()
     store.$patch({ subscriptions: [baseSubscription] })

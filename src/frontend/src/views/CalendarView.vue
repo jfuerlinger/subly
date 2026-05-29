@@ -115,7 +115,7 @@ onMounted(async () => {
     </header>
 
     <!-- Navigation & summary bar -->
-    <div class="calendar-toolbar">
+    <div class="calendar-toolbar" data-tour="calendar-toolbar">
       <div class="calendar-nav">
         <button class="icon-btn" title="Zurück" @click="navigatePrev">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -49,6 +49,16 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     await refreshSummary()
   }
 
+  async function createMany(requests: NewSubscriptionRequest[]): Promise<void> {
+    if (requests.length === 0) {
+      return
+    }
+
+    const createdSubscriptions = await Promise.all(requests.map((request) => createSubscription(request)))
+    subscriptions.value = [...createdSubscriptions, ...subscriptions.value]
+    await refreshSummary()
+  }
+
   async function updateStatus(id: string, status: SubscriptionStatus, cancelledAt?: string | null): Promise<void> {
     const updated = await updateSubscriptionStatus(id, status, cancelledAt)
     subscriptions.value = subscriptions.value.map((subscription) => (subscription.id === id ? updated : subscription))
@@ -83,6 +93,7 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     activeSubscriptions,
     initialize,
     create,
+    createMany,
     update,
     updateStatus,
     remove,

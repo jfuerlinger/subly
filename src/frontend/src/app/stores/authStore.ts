@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { AxiosError } from 'axios'
 import type { AuthenticatedUser, LoginRequest, RegisterRequest } from '../types/auth'
 import { login, register } from '../api/authApi'
+import { markOnboardingPending } from '../onboarding/onboardingStorage'
 import {
   clearAccessToken,
   clearAccessTokenExpiry,
@@ -41,6 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await register(request)
       setSession(response.accessToken, response.expiresAtUtc, response.user)
+      markOnboardingPending(response.user.id)
     } catch (error) {
       authError.value = toErrorMessage(error, 'Registrierung fehlgeschlagen.')
     } finally {

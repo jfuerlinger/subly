@@ -207,6 +207,7 @@ async function handleImport(mode: ImportMode) {
       const created = await createSubscription({
         name: subscription.name,
         vendor: subscription.vendor,
+        logoUrl: subscription.logoUrl,
         category: normalizeCategoryName(subscription.category),
         price: subscription.price,
         cycle: subscription.cycle,
@@ -258,7 +259,7 @@ async function handleImport(mode: ImportMode) {
       <h1>Einstellungen</h1>
     </div>
 
-    <div class="card settings-section">
+    <div class="card settings-section" data-tour="settings-import-export">
       <div class="settings-section-header">
         <div class="settings-section-icon settings-section-icon--primary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
