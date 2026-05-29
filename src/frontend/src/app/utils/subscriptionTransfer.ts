@@ -80,7 +80,7 @@ function parseImportItem(item: unknown, index: number): ImportSubscriptionItem {
   return {
     name: readRequiredString(item.name, 'name', index),
     vendor: readRequiredString(item.vendor, 'vendor', index),
-    logoUrl: readOptionalString(item.logoUrl),
+    logoUrl: readNullableString(item.logoUrl, 'logoUrl', index),
     category: readRequiredString(item.category, 'category', index),
     price: readPositiveNumber(item.price, 'price', index),
     cycle: readBillingCycle(item.cycle, index),
@@ -92,24 +92,25 @@ function parseImportItem(item: unknown, index: number): ImportSubscriptionItem {
   }
 }
 
-function readOptionalString(value: unknown): string | null {
-  if (value === undefined || value === null || value === '') {
-    return null
-  }
-
-  if (typeof value === 'string') {
-    return value.trim()
-  }
-
-  return null
-}
-
 function readRequiredString(value: unknown, field: string, index: number): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`Feld "${field}" fehlt oder ist ungültig (Eintrag ${index + 1}).`)
   }
 
   return value.trim()
+}
+
+function readNullableString(value: unknown, field: string, index: number): string | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error(`Feld "${field}" muss ein String sein (Eintrag ${index + 1}).`)
+  }
+
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
 }
 
 function readPositiveNumber(value: unknown, field: string, index: number): number {
