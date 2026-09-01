@@ -74,6 +74,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 
 if (args.Contains("--reset-db", StringComparer.OrdinalIgnoreCase))
 {
+    if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+    {
+        throw new InvalidOperationException("--reset-db is not allowed in this environment.");
+    }
+
     await app.Services.ResetDatabaseAsync();
     return;
 }
