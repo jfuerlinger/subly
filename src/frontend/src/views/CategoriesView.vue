@@ -260,7 +260,11 @@ onMounted(async () => {
           <!-- Display mode -->
           <div v-else class="category-name-row">
             <span class="category-name">{{ cat.name }}</span>
-            <span class="category-count" :style="{ background: `color-mix(in srgb, ${cat.color} 12%, transparent)`, color: cat.color }">
+            <span
+              class="category-count"
+              :style="{ background: `color-mix(in srgb, ${cat.color} 12%, transparent)`, color: cat.color }"
+              :title="cat.subscriptions.length > 0 ? cat.subscriptions.map((s) => s.name).join('\n') : 'Keine Abos in dieser Kategorie'"
+            >
               {{ cat.subscriptions.length }}
             </span>
             <button class="icon-action-btn" title="Umbenennen" @click="startRename(cat.id, cat.name)">
