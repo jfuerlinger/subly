@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { computed, ref } from 'vue'
 import { createCategory, fetchCategories } from '../app/api/categoriesApi'
 import { resetDatabase, type DatabaseResetResult } from '../app/api/adminApi'
@@ -72,8 +73,10 @@ async function handleResetDatabase() {
     resetResult.value = await resetDatabase()
     isResetConfirmationOpen.value = false
     await store.initialize()
-  } catch {
-    resetError.value = 'Fehler beim Zurücksetzen der Datenbank. Bitte versuche es erneut.'
+  } catch (error) {
+    resetError.value = axios.isAxiosError(error) && error.response?.status === 403
+      ? 'Das Zurücksetzen der Datenbank ist in dieser Umgebung nicht erlaubt.'
+      : 'Fehler beim Zurücksetzen der Datenbank. Bitte versuche es erneut.'
   } finally {
     isResetting.value = false
   }
