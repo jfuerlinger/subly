@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.3.5">
+<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,11 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>aff7a34b-6213-4ea3-9cbb-29189eeec329</UserSecretsId>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.3.5" />
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.3.5" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.5.3" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.5.3" />
   </ItemGroup>
 
   <ItemGroup>
