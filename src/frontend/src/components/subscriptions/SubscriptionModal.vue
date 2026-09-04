@@ -41,16 +41,10 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="props.show" class="modal-backdrop" @click.self="emit('close')">
+      <div v-if="props.show" class="modal-backdrop">
         <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <header class="modal-header">
             <h2 id="modal-title" class="modal-title">{{ title }}</h2>
-            <button class="modal-close" type="button" :aria-label="'Schließen'" @click="emit('close')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
           </header>
 
           <div class="modal-body">
@@ -91,9 +85,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 }
 
 .modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 1.125rem 1.25rem 0.875rem;
   border-bottom: 1px solid var(--color-border);
 }
@@ -102,24 +93,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text);
-}
-
-.modal-close {
-  border: none;
-  background: transparent;
-  padding: 0.25rem;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  border-radius: 0.375rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s, color 0.1s;
-}
-
-.modal-close:hover {
-  background: var(--color-border-light);
   color: var(--color-text);
 }
 
