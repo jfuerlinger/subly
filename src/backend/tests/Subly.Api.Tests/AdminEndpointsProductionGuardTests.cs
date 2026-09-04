@@ -35,4 +35,14 @@ public sealed class AdminEndpointsProductionGuardTests(ProductionWebApplicationF
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task DevLogin_ShouldReturn403InProduction()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/auth/dev-login", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

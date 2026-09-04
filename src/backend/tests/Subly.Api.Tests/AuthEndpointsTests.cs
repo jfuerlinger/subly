@@ -72,6 +72,20 @@ public sealed class AuthEndpointsTests(CustomWebApplicationFactory factory) : IC
     }
 
     [Fact]
+    public async Task DevLogin_ShouldReturnOkWithTokenForSeededDemoUser()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/auth/dev-login", null);
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        body.Should().NotBeNull();
+        body!.AccessToken.Should().NotBeNullOrWhiteSpace();
+        body.User.Email.Should().Be("demo@subly.local");
+    }
+
+    [Fact]
     public async Task Login_ShouldReturnUnauthorized_WhenPasswordIsWrong()
     {
         var client = factory.CreateClient();

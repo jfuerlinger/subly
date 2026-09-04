@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { AxiosError } from 'axios'
 import type { AuthenticatedUser, LoginRequest, RegisterRequest } from '../types/auth'
-import { login, register } from '../api/authApi'
+import { devLogin, login, register } from '../api/authApi'
 import { markOnboardingPending } from '../onboarding/onboardingStorage'
 import {
   clearAccessToken,
@@ -64,6 +64,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function devLoginUser(): Promise<void> {
+    loading.value = true
+    authError.value = null
+
+    try {
+      const response = await devLogin()
+      setSession(response.accessToken, response.expiresAtUtc, response.user)
+    } catch (error) {
+      authError.value = toErrorMessage(error, 'Dev-Login fehlgeschlagen.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   function logout(): void {
     accessToken.value = null
     expiresAtUtc.value = null
@@ -98,6 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     registerUser,
     loginUser,
+    devLoginUser,
     logout,
   }
 })

@@ -10,3 +10,8 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
   const response = await apiClient.post<AuthResponse>('/auth/login', request)
   return response.data
 }
+
+export async function devLogin(): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/auth/dev-login')
+  return response.data
+}

@@ -6,6 +6,8 @@ import { useAuthStore } from '../app/stores/authStore'
 const authStore = useAuthStore()
 const router = useRouter()
 
+const isDev = import.meta.env.DEV
+
 const mode = ref<'login' | 'register'>('login')
 
 const firstName = ref('')
@@ -28,6 +30,15 @@ async function submit() {
     })
   }
 
+  await redirectIfAuthenticated()
+}
+
+async function devLogin() {
+  await authStore.devLoginUser()
+  await redirectIfAuthenticated()
+}
+
+async function redirectIfAuthenticated() {
   if (authStore.isAuthenticated) {
     await router.push({ name: 'dashboard' })
   }
@@ -72,6 +83,16 @@ async function submit() {
           {{ mode === 'register' ? 'Registrieren' : 'Anmelden' }}
         </button>
       </form>
+
+      <button
+        v-if="mode === 'login' && isDev"
+        type="button"
+        class="dev-login-btn"
+        :disabled="authStore.loading"
+        @click="devLogin"
+      >
+        Dev-Login (ohne Passwort)
+      </button>
     </div>
   </section>
 </template>
@@ -151,6 +172,23 @@ async function submit() {
 }
 
 .submit-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.dev-login-btn {
+  width: 100%;
+  margin-top: 0.75rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  background: #fefce8;
+  color: #854d0e;
+  padding: 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dev-login-btn:disabled {
   opacity: 0.6;
   cursor: wait;
 }

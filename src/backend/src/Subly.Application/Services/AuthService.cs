@@ -61,6 +61,19 @@ public sealed class AuthService(
         return ToAuthResponse(user, authToken);
     }
 
+    public async Task<AuthResponseDto> DevLoginAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = User.NormalizeEmail(email);
+        var user = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            throw new UnauthorizedAccessException("No user found for the given email.");
+        }
+
+        var authToken = tokenService.CreateToken(user);
+        return ToAuthResponse(user, authToken);
+    }
+
     private static AuthResponseDto ToAuthResponse(User user, AuthTokenResult authToken)
     {
         return new AuthResponseDto(

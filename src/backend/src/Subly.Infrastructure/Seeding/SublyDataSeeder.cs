@@ -8,7 +8,7 @@ public static class SublyDataSeeder
 {
     private const string DemoUserFirstName = "Max";
     private const string DemoUserLastName = "Muster";
-    private const string DemoUserEmail = "demo@subly.local";
+    public const string DemoUserEmail = "demo@subly.local";
     public const string DemoUserPassword = "Demo1234!";
 
     private static readonly string[] DefaultCategories =
