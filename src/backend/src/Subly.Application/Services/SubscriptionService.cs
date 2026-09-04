@@ -114,7 +114,8 @@ public sealed class SubscriptionService(
             request.PaymentMethod,
             request.StartedAt,
             request.CancelledAt,
-            nextStatus);
+            nextStatus,
+            request.LogoUrl);
 
         await repository.SaveChangesAsync(cancellationToken);
         return ToDto(subscription);

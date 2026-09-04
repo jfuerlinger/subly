@@ -126,6 +126,7 @@ watch(
       loadLogoSuggestions(trimmedName)
     }, 250)
   },
+  { immediate: true },
 )
 
 onUnmounted(() => {
