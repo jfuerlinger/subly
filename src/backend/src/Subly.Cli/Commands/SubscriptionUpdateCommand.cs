@@ -17,8 +17,8 @@ public class SubscriptionUpdateCommand
     [Option('v', "vendor", Required = true, HelpText = "Vendor name")]
     public string? Vendor { get; set; }
 
-    [Option('c', "category", Required = true, HelpText = "Category (streaming, software, fitness, etc.)")]
-    public string? Category { get; set; }
+    [Option('c', "category-id", Required = true, HelpText = "Category ID (see category-list)")]
+    public string? CategoryId { get; set; }
 
     [Option('p', "price", Required = true, HelpText = "Price in euros")]
     public string? Price { get; set; }
@@ -51,6 +51,12 @@ public class SubscriptionUpdateCommand
             if (!Guid.TryParse(Id, out var subscriptionId))
             {
                 Console.Error.WriteLine("Invalid subscription ID format");
+                return 1;
+            }
+
+            if (!Guid.TryParse(CategoryId, out var categoryIdValue))
+            {
+                Console.Error.WriteLine("Invalid category ID format");
                 return 1;
             }
 
@@ -87,7 +93,7 @@ public class SubscriptionUpdateCommand
             var request = new UpdateSubscriptionRequest(
                 Name ?? string.Empty,
                 Vendor ?? string.Empty,
-                Category ?? string.Empty,
+                categoryIdValue,
                 priceValue,
                 Cycle ?? string.Empty,
                 nextPaymentDateValue,

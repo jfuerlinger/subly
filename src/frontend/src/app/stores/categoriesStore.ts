@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { CategoryDto } from '../api/categoriesApi'
-import { createCategory, fetchCategories, renameCategory } from '../api/categoriesApi'
+import { createCategory, deleteCategory, fetchCategories, renameCategory } from '../api/categoriesApi'
 
 export const useCategoryStore = defineStore('categories', () => {
   const categories = ref<CategoryDto[]>([])
@@ -34,5 +34,10 @@ export const useCategoryStore = defineStore('categories', () => {
       .sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  return { categories, loading, error, initialize, create, rename }
+  async function remove(id: string, replacementCategoryId?: string): Promise<void> {
+    await deleteCategory(id, replacementCategoryId)
+    categories.value = categories.value.filter((category) => category.id !== id)
+  }
+
+  return { categories, loading, error, initialize, create, rename, remove }
 })

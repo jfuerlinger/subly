@@ -5,7 +5,7 @@ namespace Subly.Application.Contracts;
 public sealed record UpdateSubscriptionRequest(
     string Name,
     string Vendor,
-    string Category,
+    Guid CategoryId,
     decimal Price,
     BillingCycle Cycle,
     DateOnly NextPaymentDate,

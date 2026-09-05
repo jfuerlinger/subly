@@ -68,6 +68,7 @@ For the core technologies in this project, use these Context7 library IDs direct
 - Write commit messages in English.
 - Prefer clear, readable code over clever one-liners.
 - If `docker` CLI isn't available, use equivalent `podman` commands for container build/run checks.
+- After completing implementation work, restart the host with `aspire run` so the Aspire AppHost is refreshed.
 
 ## CLI & API Maintenance
 

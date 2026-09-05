@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../app/stores/authStore'
 import { useProfileStore } from '../../app/stores/profileStore'
 import { useSubscriptionStore } from '../../app/stores/subscriptionStore'
+import { useCategoryStore } from '../../app/stores/categoriesStore'
 import { buildDemoSubscriptions } from '../../app/onboarding/demoSubscriptions'
 import {
   clearOnboardingPending,
@@ -39,6 +40,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 const profileStore = useProfileStore()
 const subscriptionStore = useSubscriptionStore()
+const categoryStore = useCategoryStore()
 
 const route = useRoute()
 const isMobileMenuOpen = ref(false)
@@ -159,7 +161,11 @@ async function applyOnboardingSelection(): Promise<void> {
 
   try {
     if (wantsDemoData.value && !isDemoDataSeeded(currentUserId)) {
-      await subscriptionStore.createMany(buildDemoSubscriptions())
+      if (categoryStore.categories.length === 0) {
+        await categoryStore.initialize()
+      }
+      const categoryIdByName = new Map(categoryStore.categories.map((c) => [c.name, c.id]))
+      await subscriptionStore.createMany(buildDemoSubscriptions(categoryIdByName))
       markDemoDataSeeded(currentUserId)
     }
 

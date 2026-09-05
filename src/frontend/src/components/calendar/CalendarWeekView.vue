@@ -74,7 +74,7 @@ function dayTotal(payments: CalendarPaymentEntry[]): number {
             v-for="entry in day.payments"
             :key="entry.subscription.id"
             class="week-payment-card"
-            :style="{ '--chip-color': categoryColor(entry.subscription.category) }"
+            :style="{ '--chip-color': categoryColor(entry.subscription.categoryName) }"
           >
             <div class="week-payment-top">
               <span class="week-payment-dot" />

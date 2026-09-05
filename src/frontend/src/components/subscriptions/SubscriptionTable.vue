@@ -34,7 +34,7 @@ const statusDropdownOpen = ref(false)
 const categoryDropdownOpen = ref(false)
 
 const availableCategories = computed(() => {
-  const cats = new Set(props.subscriptions.map((s) => s.category))
+  const cats = new Set(props.subscriptions.map((s) => s.categoryName))
   return [...cats].sort((a, b) => a.localeCompare(b))
 })
 
@@ -96,7 +96,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdowns))
 
 // ─── Sort state ──────────────────────────────────────────
 
-type SortKey = 'name' | 'category' | 'price' | 'nextPaymentDate' | 'startedAt' | 'cancelledAt' | 'status'
+type SortKey = 'name' | 'categoryName' | 'price' | 'nextPaymentDate' | 'startedAt' | 'cancelledAt' | 'status'
 
 const sortKey = ref<SortKey | null>(null)
 const sortDir = ref<'asc' | 'desc'>('asc')
@@ -143,7 +143,7 @@ const processedSubscriptions = computed(() => {
   }
 
   if (filterCategories.value.length > 0) {
-    result = result.filter((s) => filterCategories.value.includes(s.category))
+    result = result.filter((s) => filterCategories.value.includes(s.categoryName))
   }
 
   if (sortKey.value) {
@@ -231,8 +231,8 @@ const processedSubscriptions = computed(() => {
             <th class="th-sortable" @click="toggleSort('name')">
               Name <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'name' }">{{ sortIcon('name') }}</span>
             </th>
-            <th class="th-sortable" @click="toggleSort('category')">
-              Kategorie <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'category' }">{{ sortIcon('category') }}</span>
+            <th class="th-sortable" @click="toggleSort('categoryName')">
+              Kategorie <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'categoryName' }">{{ sortIcon('categoryName') }}</span>
             </th>
             <th class="th-sortable" @click="toggleSort('price')">
               Preis <span class="sort-icon" :class="{ 'sort-icon--active': sortKey === 'price' }">{{ sortIcon('price') }}</span>
@@ -263,7 +263,7 @@ const processedSubscriptions = computed(() => {
                 <span>{{ subscription.name }}</span>
               </div>
             </td>
-            <td>{{ subscription.category }}</td>
+            <td>{{ subscription.categoryName }}</td>
             <td>{{ formatCurrency(subscription.price) }}</td>
             <td>{{ formatDate(subscription.nextPaymentDate) }}</td>
             <td>{{ formatDate(subscription.startedAt) }}</td>

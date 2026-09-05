@@ -24,7 +24,7 @@ const topCategory = computed(() => {
   if (active.value.length === 0) return null
   const map = new Map<string, number>()
   for (const s of active.value) {
-    map.set(s.category, (map.get(s.category) ?? 0) + toMonthlyAmount(s))
+    map.set(s.categoryName, (map.get(s.categoryName) ?? 0) + toMonthlyAmount(s))
   }
   const [cat, total] = [...map.entries()].sort((a, b) => b[1] - a[1])[0]
   return { category: cat.charAt(0).toUpperCase() + cat.slice(1), total }

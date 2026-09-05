@@ -23,6 +23,9 @@ dotnet test .\src\backend\Subly.sln --filter "FullyQualifiedName~<TestName>"
 # Start the full system (Aspire)
 dotnet run --project .\src\backend\src\Subly.AppHost\Subly.AppHost.csproj
 
+# After implementation work is complete, restart the host with Aspire
+aspire run
+
 # Seed / reset the database manually
 dotnet run --project .\src\backend\src\Subly.Api\Subly.Api.csproj -- --seed
 dotnet run --project .\src\backend\src\Subly.Api\Subly.Api.csproj -- --reset-db

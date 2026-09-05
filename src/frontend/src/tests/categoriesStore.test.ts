@@ -66,4 +66,16 @@ describe('useCategoryStore', () => {
     expect(names).toContain('tools')
     expect(names).not.toContain('software')
   })
+
+  it('removes a category after deleting it through the API', async () => {
+    vi.spyOn(categoriesApi, 'fetchCategories').mockResolvedValue([cat1, cat2])
+    const remove = vi.spyOn(categoriesApi, 'deleteCategory').mockResolvedValue()
+    const store = useCategoryStore()
+    await store.initialize()
+
+    await store.remove('1', '2')
+
+    expect(remove).toHaveBeenCalledWith('1', '2')
+    expect(store.categories).toEqual([cat2])
+  })
 })

@@ -11,15 +11,22 @@ const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/
 
 type JsonRecord = Record<string, unknown>
 
+// The exported/imported JSON represents a category by its (portable) name rather than the
+// internal categoryId, which isn't meaningful across installs/accounts.
+export interface SubscriptionExportItem extends Omit<Subscription, 'categoryId' | 'categoryName'> {
+  category: string
+}
+
 export interface SubscriptionExportPayload {
   format: typeof exportFormat
   version: typeof exportVersion
   exportedAt: string
-  subscriptions: Subscription[]
+  subscriptions: SubscriptionExportItem[]
 }
 
-export interface ImportSubscriptionItem extends NewSubscriptionRequest {
+export interface ImportSubscriptionItem extends Omit<NewSubscriptionRequest, 'categoryId'> {
   status: SubscriptionStatus
+  category: string
 }
 
 export function buildSubscriptionExportPayload(
@@ -29,7 +36,10 @@ export function buildSubscriptionExportPayload(
     format: exportFormat,
     version: exportVersion,
     exportedAt: new Date().toISOString(),
-    subscriptions,
+    subscriptions: subscriptions.map(({ categoryId: _categoryId, categoryName, ...rest }) => ({
+      ...rest,
+      category: categoryName,
+    })),
   }
 }
 

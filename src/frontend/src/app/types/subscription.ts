@@ -7,7 +7,8 @@ export interface Subscription {
   name: string
   vendor: string
   logoUrl: string | null
-  category: string
+  categoryId: string
+  categoryName: string
   price: number
   cycle: BillingCycle
   nextPaymentDate: string
@@ -22,7 +23,7 @@ export interface NewSubscriptionRequest {
   name: string
   vendor: string
   logoUrl: string | null
-  category: string
+  categoryId: string
   price: number
   cycle: BillingCycle
   nextPaymentDate: string

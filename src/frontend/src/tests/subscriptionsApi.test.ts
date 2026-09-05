@@ -31,7 +31,7 @@ describe('subscriptionsApi', () => {
       name: 'ChatGPT Plus',
       vendor: 'OpenAI',
       logoUrl: null,
-      category: 'software',
+      categoryId: 'cat-software',
       price: 22,
       cycle: 'monthly',
       nextPaymentDate: '2026-05-20',
@@ -39,7 +39,14 @@ describe('subscriptionsApi', () => {
       startedAt: '2026-04-01',
       cancelledAt: null,
     }
-    const responsePayload = { id: 'new-id', ...request, status: 'active', autoRenew: true, startedAt: '2026-05-16' } as Subscription
+    const responsePayload = {
+      id: 'new-id',
+      ...request,
+      categoryName: 'software',
+      status: 'active',
+      autoRenew: true,
+      startedAt: '2026-05-16',
+    } as Subscription
     vi.spyOn(apiClient, 'post').mockResolvedValue({ data: responsePayload } as AxiosResponse<Subscription>)
 
     const result = await createSubscription(request)
@@ -53,7 +60,8 @@ describe('subscriptionsApi', () => {
       name: 'Notion',
       vendor: 'Notion',
       logoUrl: null,
-      category: 'software',
+      categoryId: 'cat-software',
+      categoryName: 'software',
       price: 10,
       cycle: 'monthly',
       nextPaymentDate: '2026-05-20',
@@ -75,7 +83,7 @@ describe('subscriptionsApi', () => {
       name: 'Notion Plus',
       vendor: 'Notion Labs',
       logoUrl: null,
-      category: 'software',
+      categoryId: 'cat-software',
       price: 12.99,
       cycle: 'yearly',
       nextPaymentDate: '2026-08-10',
@@ -86,6 +94,7 @@ describe('subscriptionsApi', () => {
     const responsePayload = {
       id: 'sub-1',
       ...request,
+      categoryName: 'software',
       status: 'active',
       autoRenew: true,
     } as Subscription

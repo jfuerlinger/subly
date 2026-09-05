@@ -66,7 +66,7 @@ const rows = computed(() =>
       textY: yCenter + 4,
       barY: yCenter - 9,
       barW: barW > 0 ? Math.max(barW, 3) : 0,
-      color: barColor(s.category),
+      color: barColor(s.categoryName),
     }
   }),
 )
@@ -157,7 +157,7 @@ function updateTooltip(e: MouseEvent) {
           <SubscriptionLogo :name="rows[hoveredIndex].name" :logo-url="rows[hoveredIndex].logoUrl" :size="18" />
           <span>{{ rows[hoveredIndex].name }}</span>
         </strong>
-        <span>{{ rows[hoveredIndex].vendor }} · {{ rows[hoveredIndex].category }}</span>
+        <span>{{ rows[hoveredIndex].vendor }} · {{ rows[hoveredIndex].categoryName }}</span>
         <span>
           {{ formatCurrency(rows[hoveredIndex].monthly) }}/Mo.
           · {{ rows[hoveredIndex].cycle === 'yearly' ? 'jährlich' : 'monatlich' }}

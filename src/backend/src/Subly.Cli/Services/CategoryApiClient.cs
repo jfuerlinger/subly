@@ -84,4 +84,30 @@ public class CategoryApiClient
             return null;
         }
     }
+
+    public async Task<bool> DeleteAsync(Guid id, DeleteCategoryRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(request);
+            using var message = new HttpRequestMessage(HttpMethod.Delete, $"/api/categories/{id}")
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+            };
+            var response = await _httpClient.SendAsync(message, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+
+            Console.Error.WriteLine($"Error: {response.StatusCode}");
+            Console.Error.WriteLine(await response.Content.ReadAsStringAsync(cancellationToken));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error deleting category: {ex.Message}");
+            return false;
+        }
+    }
 }

@@ -50,7 +50,7 @@ function createDefaultForm(): NewSubscriptionRequest {
     name: '',
     vendor: '',
     logoUrl: null,
-    category: categories.value[0]?.name ?? '',
+    categoryId: categories.value[0]?.id ?? '',
     price: 0,
     cycle: 'monthly',
     nextPaymentDate: today,
@@ -64,7 +64,7 @@ function applyFormValues(values: NewSubscriptionRequest) {
   form.name = values.name
   form.vendor = values.vendor
   form.logoUrl = values.logoUrl
-  form.category = values.category
+  form.categoryId = values.categoryId
   form.price = values.price
   form.cycle = values.cycle
   form.nextPaymentDate = values.nextPaymentDate
@@ -75,8 +75,8 @@ function applyFormValues(values: NewSubscriptionRequest) {
 
 onMounted(async () => {
   categories.value = await fetchCategories()
-  if (!form.category) {
-    form.category = categories.value[0]?.name ?? ''
+  if (!form.categoryId) {
+    form.categoryId = categories.value[0]?.id ?? ''
   }
 })
 
@@ -140,10 +140,10 @@ function onCategoryChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   if (value === '__new__') {
     showNewCategoryInput.value = true
-    form.category = ''
+    form.categoryId = ''
   } else {
     showNewCategoryInput.value = false
-    form.category = value
+    form.categoryId = value
   }
 }
 
@@ -158,7 +158,7 @@ async function onAddCategory() {
     categories.value = [...categories.value, created].sort((a, b) =>
       a.name.localeCompare(b.name),
     )
-    form.category = created.name
+    form.categoryId = created.id
     showNewCategoryInput.value = false
     newCategoryName.value = ''
     newCategoryError.value = ''
@@ -171,13 +171,13 @@ function cancelNewCategory() {
   showNewCategoryInput.value = false
   newCategoryName.value = ''
   newCategoryError.value = ''
-  if (!form.category) {
-    form.category = categories.value[0]?.name ?? ''
+  if (!form.categoryId) {
+    form.categoryId = categories.value[0]?.id ?? ''
   }
 }
 
 function onSubmit() {
-  if (!form.name || !form.vendor || !form.category || form.price <= 0) {
+  if (!form.name || !form.vendor || !form.categoryId || form.price <= 0) {
     return
   }
 
@@ -364,9 +364,9 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
     <div class="field">
       <label class="field-label">Kategorie</label>
-      <select :value="showNewCategoryInput ? '__new__' : form.category" @change="onCategoryChange" required>
+      <select :value="showNewCategoryInput ? '__new__' : form.categoryId" @change="onCategoryChange" required>
         <option value="" disabled>Kategorie wählen</option>
-        <option v-for="cat in categories" :key="cat.id" :value="cat.name">
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
           {{ cat.name }}
         </option>
         <option value="__new__">+ Neue Kategorie anlegen…</option>

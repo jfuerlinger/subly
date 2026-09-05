@@ -3,7 +3,7 @@ namespace Subly.Cli.Contracts;
 public record UpdateSubscriptionRequest(
     string Name,
     string Vendor,
-    string Category,
+    Guid CategoryId,
     decimal Price,
     string Cycle,
     DateOnly NextPaymentDate,

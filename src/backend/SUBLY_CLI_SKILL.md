@@ -306,6 +306,23 @@ dotnet run --project src/Subly.Cli -- category-rename --id <category-id> --name 
 - `--id` or `-i` (required): Category ID (GUID)
 - `--name` or `-n` (required): New category name
 
+### Delete Category
+
+Delete a category. When it contains subscriptions, supply a replacement category so their assignments are preserved.
+
+```bash
+dotnet run --project src/Subly.Cli -- category-delete \
+  --id <category-id> \
+  --replacement-id <replacement-category-id> \
+  --yes \
+  --token "<token>"
+```
+
+**Options:**
+- `--id` or `-i` (required): Category ID (GUID)
+- `--replacement-id` or `-r` (required only when subscriptions use the category): Target category ID
+- `--yes` or `-y`: Skip confirmation
+
 ---
 
 ## Examples
@@ -402,6 +419,7 @@ Exit codes:
 | POST /api/categories | category-create |
 | POST /api/admin/reset-database | database-reset |
 | PATCH /api/categories/{id}/name | category-rename |
+| DELETE /api/categories/{id} | category-delete |
 
 ---
 

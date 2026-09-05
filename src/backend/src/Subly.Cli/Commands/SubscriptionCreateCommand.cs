@@ -14,8 +14,8 @@ public class SubscriptionCreateCommand
     [Option('v', "vendor", Required = true, HelpText = "Vendor name")]
     public string? Vendor { get; set; }
 
-    [Option('c', "category", Required = true, HelpText = "Category (streaming, software, fitness, etc.)")]
-    public string? Category { get; set; }
+    [Option('c', "category-id", Required = true, HelpText = "Category ID (see category-list)")]
+    public string? CategoryId { get; set; }
 
     [Option('p', "price", Required = true, HelpText = "Price in euros")]
     public string? Price { get; set; }
@@ -48,6 +48,12 @@ public class SubscriptionCreateCommand
     {
         try
         {
+            if (!Guid.TryParse(CategoryId, out var categoryIdValue))
+            {
+                Console.Error.WriteLine("Invalid category ID format");
+                return 1;
+            }
+
             if (!decimal.TryParse(Price, CultureInfo.InvariantCulture, out var priceValue))
             {
                 Console.Error.WriteLine("Invalid price format. Use format like: 15.99");
@@ -80,7 +86,7 @@ public class SubscriptionCreateCommand
             var request = new CreateSubscriptionRequest(
                 Name ?? string.Empty,
                 Vendor ?? string.Empty,
-                Category ?? string.Empty,
+                categoryIdValue,
                 priceValue,
                 Cycle ?? string.Empty,
                 nextPaymentDateValue,

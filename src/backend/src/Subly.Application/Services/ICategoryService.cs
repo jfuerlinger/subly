@@ -9,4 +9,6 @@ public interface ICategoryService
     Task<CategoryDto> CreateCategoryAsync(string name, CancellationToken cancellationToken = default);
 
     Task<CategoryDto> RenameCategoryAsync(Guid id, string newName, CancellationToken cancellationToken = default);
+
+    Task DeleteCategoryAsync(Guid id, Guid? replacementCategoryId, CancellationToken cancellationToken = default);
 }

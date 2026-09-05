@@ -19,7 +19,7 @@ const filteredSubscriptions = computed(() => {
   }
 
   return store.subscriptions.filter((subscription) => {
-    const searchableValues = [subscription.name, subscription.vendor, subscription.category]
+    const searchableValues = [subscription.name, subscription.vendor, subscription.categoryName]
     return searchableValues.some((value) => value.toLowerCase().includes(query))
   })
 })

@@ -1,9 +1,11 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
 using Subly.Application.Contracts;
+using Subly.Domain.Models;
 
 namespace Subly.Api.Tests;
 
@@ -79,5 +81,94 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
         var response = await client.PatchAsJsonAsync($"/api/categories/{nonExistentId}/name", new { name = "anything" });
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldDeleteUnusedCategory()
+    {
+        var client = factory.CreateClient();
+        var created = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"unused-{Guid.NewGuid():N}"));
+        var category = await created.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/categories/{category!.Id}");
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var categories = await client.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/categories", JsonOptions);
+        categories.Should().NotContain(c => c.Id == category.Id);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldReassignSubscriptionsToReplacementCategory()
+    {
+        var client = factory.CreateClient();
+        var sourceResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"source-{Guid.NewGuid():N}"));
+        var targetResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"target-{Guid.NewGuid():N}"));
+        var source = await sourceResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+        var target = await targetResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+        var authenticatedClient = await CreateAuthenticatedClientAsync($"category-{Guid.NewGuid():N}@example.com");
+
+        var subscriptionResponse = await authenticatedClient.PostAsJsonAsync("/api/subscriptions", new CreateSubscriptionRequest(
+            Name: "Reassign me",
+            Vendor: "Subly",
+            CategoryId: source!.Id,
+            Price: 10m,
+            Cycle: BillingCycle.Monthly,
+            NextPaymentDate: new DateOnly(2026, 10, 1),
+            PaymentMethod: "Visa",
+            StartedAt: new DateOnly(2026, 1, 1),
+            CancelledAt: null));
+        subscriptionResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        using var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/categories/{source.Id}")
+        {
+            Content = JsonContent.Create(new DeleteCategoryRequest(target!.Id)),
+        };
+        var deleteResponse = await client.SendAsync(deleteRequest);
+
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var subscriptions = await authenticatedClient.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+        subscriptions.Should().ContainSingle();
+        subscriptions!.Single().CategoryId.Should().Be(target.Id);
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldRequireReplacement_WhenCategoryHasSubscriptions()
+    {
+        var client = factory.CreateClient();
+        var sourceResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"source-{Guid.NewGuid():N}"));
+        var source = await sourceResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+        var authenticatedClient = await CreateAuthenticatedClientAsync($"category-{Guid.NewGuid():N}@example.com");
+
+        await authenticatedClient.PostAsJsonAsync("/api/subscriptions", new CreateSubscriptionRequest(
+            Name: "Keep me",
+            Vendor: "Subly",
+            CategoryId: source!.Id,
+            Price: 10m,
+            Cycle: BillingCycle.Monthly,
+            NextPaymentDate: new DateOnly(2026, 10, 1),
+            PaymentMethod: "Visa",
+            StartedAt: new DateOnly(2026, 1, 1),
+            CancelledAt: null));
+
+        var response = await client.DeleteAsync($"/api/categories/{source.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    private async Task<HttpClient> CreateAuthenticatedClientAsync(string email)
+    {
+        var client = factory.CreateClient();
+        var registerResponse = await client.PostAsJsonAsync("/api/auth/register", new RegisterUserRequest(
+            FirstName: "Max",
+            LastName: "Muster",
+            Email: email,
+            Password: "Secure123!"));
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var authResponse = await registerResponse.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions);
+        authResponse.Should().NotBeNull();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResponse!.AccessToken);
+        return client;
     }
 }

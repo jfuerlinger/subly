@@ -42,7 +42,7 @@ public static class OutputFormatter
         Console.WriteLine($"ID:                {subscription.Id}");
         Console.WriteLine($"Name:              {subscription.Name}");
         Console.WriteLine($"Vendor:            {subscription.Vendor}");
-        Console.WriteLine($"Category:          {subscription.Category}");
+        Console.WriteLine($"Category:          {subscription.CategoryName} ({subscription.CategoryId})");
         Console.WriteLine($"Price:             €{subscription.Price:F2}");
         Console.WriteLine($"Billing Cycle:     {subscription.Cycle}");
         Console.WriteLine($"Next Payment:      {subscription.NextPaymentDate}");

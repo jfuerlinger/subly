@@ -1,12 +1,15 @@
 import type { NewSubscriptionRequest } from '../types/subscription'
 
-export function buildDemoSubscriptions(anchorDate = new Date()): NewSubscriptionRequest[] {
+export function buildDemoSubscriptions(
+  categoryIdByName: Map<string, string>,
+  anchorDate = new Date(),
+): NewSubscriptionRequest[] {
   return [
     {
       name: 'Netflix Standard',
       vendor: 'Netflix',
       logoUrl: null,
-      category: 'streaming',
+      categoryId: categoryIdByName.get('streaming')!,
       price: 17.99,
       cycle: 'monthly',
       nextPaymentDate: formatDate(addDays(anchorDate, 6)),
@@ -18,7 +21,7 @@ export function buildDemoSubscriptions(anchorDate = new Date()): NewSubscription
       name: 'Spotify Family',
       vendor: 'Spotify',
       logoUrl: null,
-      category: 'streaming',
+      categoryId: categoryIdByName.get('streaming')!,
       price: 17.99,
       cycle: 'monthly',
       nextPaymentDate: formatDate(addDays(anchorDate, 2)),
@@ -30,7 +33,7 @@ export function buildDemoSubscriptions(anchorDate = new Date()): NewSubscription
       name: 'ChatGPT Plus',
       vendor: 'OpenAI',
       logoUrl: null,
-      category: 'software',
+      categoryId: categoryIdByName.get('software')!,
       price: 22,
       cycle: 'monthly',
       nextPaymentDate: formatDate(addDays(anchorDate, 4)),
@@ -42,7 +45,7 @@ export function buildDemoSubscriptions(anchorDate = new Date()): NewSubscription
       name: 'Amazon Prime',
       vendor: 'Amazon',
       logoUrl: null,
-      category: 'membership',
+      categoryId: categoryIdByName.get('membership')!,
       price: 89.9,
       cycle: 'yearly',
       nextPaymentDate: formatDate(addMonths(anchorDate, 2)),
@@ -54,7 +57,7 @@ export function buildDemoSubscriptions(anchorDate = new Date()): NewSubscription
       name: 'iCloud+ 200GB',
       vendor: 'Apple',
       logoUrl: null,
-      category: 'cloud',
+      categoryId: categoryIdByName.get('cloud')!,
       price: 2.99,
       cycle: 'monthly',
       nextPaymentDate: formatDate(addDays(anchorDate, 10)),

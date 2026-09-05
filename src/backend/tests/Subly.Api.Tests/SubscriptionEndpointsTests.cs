@@ -33,8 +33,8 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         var user1Client = await CreateAuthenticatedClientAsync($"user1-{uniqueSuffix}@example.com");
         var user2Client = await CreateAuthenticatedClientAsync($"user2-{uniqueSuffix}@example.com");
 
-        var request1 = CreateSubscriptionRequest($"Netflix-{uniqueSuffix}");
-        var request2 = CreateSubscriptionRequest($"Spotify-{uniqueSuffix}");
+        var request1 = await CreateSubscriptionRequestAsync(user1Client, $"Netflix-{uniqueSuffix}");
+        var request2 = await CreateSubscriptionRequestAsync(user2Client, $"Spotify-{uniqueSuffix}");
 
         var createUser1Response = await user1Client.PostAsJsonAsync("/api/subscriptions", request1);
         var createUser2Response = await user2Client.PostAsJsonAsync("/api/subscriptions", request2);
@@ -62,7 +62,7 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
         var client = await CreateAuthenticatedClientAsync($"status-{uniqueSuffix}@example.com");
-        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Notion-{uniqueSuffix}"));
+        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", await CreateSubscriptionRequestAsync(client, $"Notion-{uniqueSuffix}"));
         var created = await createResponse.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
 
         var response = await client.PatchAsJsonAsync(
@@ -80,13 +80,13 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
         var client = await CreateAuthenticatedClientAsync($"update-{uniqueSuffix}@example.com");
-        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Notion-{uniqueSuffix}"));
+        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", await CreateSubscriptionRequestAsync(client, $"Notion-{uniqueSuffix}"));
         var created = await createResponse.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
 
         var request = new UpdateSubscriptionRequest(
             Name: $"Notion Premium-{uniqueSuffix}",
             Vendor: "Notion Labs",
-            Category: "software",
+            CategoryId: await GetCategoryIdAsync(client, "software"),
             Price: 12.99m,
             Cycle: BillingCycle.Yearly,
             NextPaymentDate: new DateOnly(2026, 8, 10),
@@ -106,11 +106,47 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
     }
 
     [Fact]
+    public async Task GetSubscriptions_ShouldReflectCurrentCategoryName_AfterCategoryIsRenamed()
+    {
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var client = await CreateAuthenticatedClientAsync($"rename-{uniqueSuffix}@example.com");
+
+        // Use a category created specifically for this test (rather than a shared seeded one like
+        // "software") since renaming it must not affect other tests sharing this fixture's database.
+        var categoryResponse = await client.PostAsJsonAsync("/api/categories", new { name = $"temp-{uniqueSuffix}" });
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
+
+        var createResponse = await client.PostAsJsonAsync("/api/subscriptions", new CreateSubscriptionRequest(
+            Name: $"Notion-{uniqueSuffix}",
+            Vendor: "Notion",
+            CategoryId: category!.Id,
+            Price: 12m,
+            Cycle: BillingCycle.Monthly,
+            NextPaymentDate: new DateOnly(2026, 5, 20),
+            PaymentMethod: "Visa",
+            StartedAt: new DateOnly(2026, 3, 10),
+            CancelledAt: null));
+        var created = await createResponse.Content.ReadFromJsonAsync<SubscriptionDto>(JsonOptions);
+
+        var newCategoryName = $"productivity-{uniqueSuffix}";
+        var renameResponse = await client.PatchAsJsonAsync(
+            $"/api/categories/{category.Id}/name",
+            new { name = newCategoryName });
+        renameResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var subscriptions = await client.GetFromJsonAsync<IReadOnlyList<SubscriptionDto>>("/api/subscriptions", JsonOptions);
+
+        var subscription = subscriptions!.Single(x => x.Id == created!.Id);
+        subscription.CategoryId.Should().Be(category.Id);
+        subscription.CategoryName.Should().Be(newCategoryName);
+    }
+
+    [Fact]
     public async Task GetDashboardSummary_ShouldReturnCalculatedSummaryForCurrentUser()
     {
         var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
         var client = await CreateAuthenticatedClientAsync($"summary-{uniqueSuffix}@example.com");
-        await client.PostAsJsonAsync("/api/subscriptions", CreateSubscriptionRequest($"Summary-{uniqueSuffix}"));
+        await client.PostAsJsonAsync("/api/subscriptions", await CreateSubscriptionRequestAsync(client, $"Summary-{uniqueSuffix}"));
 
         var summary = await client.GetFromJsonAsync<DashboardSummaryDto>("/api/dashboard/summary", JsonOptions);
 
@@ -132,18 +168,24 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         suggestions!.Should().Contain(x => x.Domain == "netflix.com");
     }
 
-    private static CreateSubscriptionRequest CreateSubscriptionRequest(string name)
+    private static async Task<CreateSubscriptionRequest> CreateSubscriptionRequestAsync(HttpClient client, string name)
     {
         return new CreateSubscriptionRequest(
             Name: name,
             Vendor: "OpenAI",
-            Category: "software",
+            CategoryId: await GetCategoryIdAsync(client, "software"),
             Price: 22m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: new DateOnly(2026, 5, 20),
             PaymentMethod: "Visa",
             StartedAt: new DateOnly(2026, 3, 10),
             CancelledAt: null);
+    }
+
+    private static async Task<Guid> GetCategoryIdAsync(HttpClient client, string name)
+    {
+        var categories = await client.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/categories", JsonOptions);
+        return categories!.Single(c => c.Name == name).Id;
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(string email)

@@ -36,8 +36,8 @@ function categoryColor(name: string): string {
 
 // ─── Subscriptions per category ──────────────────────────
 
-function subscriptionsForCategory(categoryName: string) {
-  return subscriptionStore.subscriptions.filter((s) => s.category === categoryName)
+function subscriptionsForCategory(categoryId: string) {
+  return subscriptionStore.subscriptions.filter((s) => s.categoryId === categoryId)
 }
 
 // ─── Expanded cards ──────────────────────────────────────
@@ -94,6 +94,57 @@ function onRenameKeydown(event: KeyboardEvent, id: string) {
   if (event.key === 'Escape') cancelRename()
 }
 
+// ─── Delete category ─────────────────────────────────────
+
+const deletingCategory = ref<{ id: string; name: string; subscriptionCount: number } | null>(null)
+const replacementCategoryId = ref('')
+const deleteError = ref<string | null>(null)
+const isDeleting = ref(false)
+
+function startDelete(id: string, name: string, subscriptionCount: number) {
+  if (subscriptionCount === 0) {
+    void deleteCategory(id)
+    return
+  }
+
+  deletingCategory.value = { id, name, subscriptionCount }
+  replacementCategoryId.value = categoryStore.categories.find((category) => category.id !== id)?.id ?? ''
+  deleteError.value = null
+}
+
+function cancelDelete() {
+  deletingCategory.value = null
+  replacementCategoryId.value = ''
+  deleteError.value = null
+}
+
+async function deleteCategory(id: string, replacementId?: string) {
+  isDeleting.value = true
+  deleteError.value = null
+  try {
+    await categoryStore.remove(id, replacementId)
+    await subscriptionStore.initialize()
+    cancelDelete()
+  } catch {
+    if (deletingCategory.value) {
+      deleteError.value = 'Kategorie konnte nicht gelöscht werden.'
+    } else {
+      categoryStore.error = 'Kategorie konnte nicht gelöscht werden.'
+    }
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+async function confirmDelete() {
+  if (!deletingCategory.value || !replacementCategoryId.value) {
+    deleteError.value = 'Bitte wähle eine Ersatzkategorie aus.'
+    return
+  }
+
+  await deleteCategory(deletingCategory.value.id, replacementCategoryId.value)
+}
+
 // ─── Create new category ─────────────────────────────────
 
 const showCreateForm = ref(false)
@@ -145,7 +196,7 @@ const enrichedCategories = computed(() =>
   categoryStore.categories.map((cat) => ({
     ...cat,
     color: categoryColor(cat.name),
-    subscriptions: subscriptionsForCategory(cat.name),
+    subscriptions: subscriptionsForCategory(cat.id),
   })),
 )
 
@@ -273,6 +324,11 @@ onMounted(async () => {
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
+            <button class="icon-action-btn icon-action-btn--danger" title="Löschen" @click="startDelete(cat.id, cat.name, cat.subscriptions.length)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6m3 0V4h8v2m-6 4v6m4-6v6"/>
+              </svg>
+            </button>
           </div>
 
           <button
@@ -319,6 +375,41 @@ onMounted(async () => {
         </Transition>
       </div>
     </div>
+
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="deletingCategory" class="modal-backdrop">
+          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-category-title">
+            <header class="modal-header">
+              <h2 id="delete-category-title" class="modal-title">Kategorie löschen?</h2>
+            </header>
+            <div class="modal-body">
+              <p>
+                Der Kategorie „{{ deletingCategory.name }}“ sind {{ deletingCategory.subscriptionCount }}
+                {{ deletingCategory.subscriptionCount === 1 ? 'Abo' : 'Abos' }} zugeordnet.
+                Wähle eine Ersatzkategorie, bevor sie gelöscht wird.
+              </p>
+              <label class="replacement-label">
+                Ersatzkategorie
+                <select v-model="replacementCategoryId" class="replacement-select" :disabled="isDeleting">
+                  <option disabled value="">Kategorie auswählen</option>
+                  <option v-for="category in categoryStore.categories.filter((category) => category.id !== deletingCategory?.id)" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+              </label>
+              <p v-if="deleteError" class="field-error">{{ deleteError }}</p>
+              <div class="delete-actions">
+                <button class="btn-ghost btn-sm" :disabled="isDeleting" @click="cancelDelete">Abbrechen</button>
+                <button class="btn-danger btn-sm" :disabled="isDeleting || !replacementCategoryId" @click="confirmDelete">
+                  {{ isDeleting ? 'Löschen…' : 'Abos verschieben & Kategorie löschen' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>
 
@@ -453,6 +544,11 @@ onMounted(async () => {
 .icon-action-btn--confirm:hover {
   background: #dcfce7;
   color: #15803d;
+}
+
+.icon-action-btn--danger:hover {
+  background: #fef2f2;
+  color: var(--color-danger);
 }
 
 .expand-btn {
@@ -621,6 +717,94 @@ onMounted(async () => {
   font-size: 0.8rem;
   color: var(--color-danger);
   padding: 0 1rem 0.5rem;
+}
+
+/* ─── Delete dialog ─────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-dialog {
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.modal-header {
+  padding: 1.125rem 1.25rem 0.875rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.modal-body {
+  padding: 1.25rem;
+}
+
+.modal-body p {
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+.replacement-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.replacement-select {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.btn-danger {
+  border: 1px solid var(--color-danger);
+  border-radius: 0.5rem;
+  background: var(--color-danger);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.18s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 
 /* ─── Transitions ───────────────────────────────────────── */

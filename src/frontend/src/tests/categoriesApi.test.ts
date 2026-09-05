@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AxiosResponse } from 'axios'
 import { apiClient } from '../app/api/client'
-import { createCategory, fetchCategories, renameCategory, type CategoryDto } from '../app/api/categoriesApi'
+import { createCategory, deleteCategory, fetchCategories, renameCategory, type CategoryDto } from '../app/api/categoriesApi'
 
 describe('categoriesApi', () => {
   beforeEach(() => {
@@ -39,5 +39,15 @@ describe('categoriesApi', () => {
 
     expect(result.name).toBe('entertainment')
     expect(apiClient.patch).toHaveBeenCalledWith('/categories/abc-123/name', { name: 'entertainment' })
+  })
+
+  it('deletes a category and supplies its replacement', async () => {
+    vi.spyOn(apiClient, 'delete').mockResolvedValue({} as AxiosResponse)
+
+    await deleteCategory('source-id', 'target-id')
+
+    expect(apiClient.delete).toHaveBeenCalledWith('/categories/source-id', {
+      data: { replacementCategoryId: 'target-id' },
+    })
   })
 })

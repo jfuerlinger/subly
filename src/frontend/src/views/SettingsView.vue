@@ -188,9 +188,9 @@ async function handleImport(mode: ImportMode) {
       mode === 'replace' ? fetchSubscriptions() : Promise.resolve([]),
     ])
 
-    const existingCategoryNames = new Set(categories.map((category) => category.name.toLowerCase()))
+    const categoryIdByName = new Map(categories.map((category) => [category.name.toLowerCase(), category.id]))
     const categoriesToCreate = [...new Set(importSubscriptions.map((subscription) => normalizeCategoryName(subscription.category)))]
-      .filter((categoryName) => !existingCategoryNames.has(categoryName))
+      .filter((categoryName) => !categoryIdByName.has(categoryName))
     const statusUpdateCount = importSubscriptions.filter((subscription) => needsStatusUpdate(subscription)).length
     const deleteExistingCount = mode === 'replace' ? existingSubscriptions.length : 0
     importProgressTotal.value =
@@ -201,7 +201,8 @@ async function handleImport(mode: ImportMode) {
 
     for (const categoryName of categoriesToCreate) {
       importProgressStep.value = `Kategorie "${categoryName}" wird angelegt…`
-      await createCategory(categoryName)
+      const created = await createCategory(categoryName)
+      categoryIdByName.set(created.name.toLowerCase(), created.id)
       importProgressCompleted.value += 1
     }
 
@@ -211,7 +212,7 @@ async function handleImport(mode: ImportMode) {
         name: subscription.name,
         vendor: subscription.vendor,
         logoUrl: subscription.logoUrl,
-        category: normalizeCategoryName(subscription.category),
+        categoryId: categoryIdByName.get(normalizeCategoryName(subscription.category))!,
         price: subscription.price,
         cycle: subscription.cycle,
         nextPaymentDate: subscription.nextPaymentDate,

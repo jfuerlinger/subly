@@ -39,9 +39,11 @@ public sealed class SubscriptionService(
     {
         var userId = currentUserProvider.GetRequiredUserId();
         var subscriptions = await repository.ListAsync(userId, cancellationToken);
+        var categoryNames = (await categoryRepository.ListAsync(cancellationToken))
+            .ToDictionary(c => c.Id, c => c.Name);
         return subscriptions
             .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(ToDto)
+            .Select(s => ToDto(s, categoryNames.GetValueOrDefault(s.CategoryId, string.Empty)))
             .ToArray();
     }
 
@@ -49,20 +51,26 @@ public sealed class SubscriptionService(
     {
         var userId = currentUserProvider.GetRequiredUserId();
         var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
-        return subscription is null ? null : ToDto(subscription);
+        if (subscription is null)
+        {
+            return null;
+        }
+
+        var category = await categoryRepository.GetByIdAsync(subscription.CategoryId, cancellationToken);
+        return ToDto(subscription, category?.Name ?? string.Empty);
     }
 
     public async Task<SubscriptionDto> CreateSubscriptionAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken = default)
     {
         var userId = currentUserProvider.GetRequiredUserId();
-        await ValidateRequestAsync(request, cancellationToken);
+        var category = await ValidateRequestAsync(request, cancellationToken);
 
         var initialStatus = request.CancelledAt.HasValue ? SubscriptionStatus.Cancelled : SubscriptionStatus.Active;
         var subscription = Subscription.Create(
             userId,
             request.Name,
             request.Vendor,
-            request.Category.ToLowerInvariant(),
+            category.Id,
             request.Price,
             request.Cycle,
             request.NextPaymentDate,
@@ -75,7 +83,7 @@ public sealed class SubscriptionService(
         await repository.AddAsync(subscription, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
 
-        return ToDto(subscription);
+        return ToDto(subscription, category.Name);
     }
 
     public async Task<SubscriptionDto?> UpdateSubscriptionAsync(Guid id, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default)
@@ -87,11 +95,11 @@ public sealed class SubscriptionService(
             return null;
         }
 
-        await ValidateRequestAsync(
+        var category = await ValidateRequestAsync(
             new CreateSubscriptionRequest(
                 request.Name,
                 request.Vendor,
-                request.Category,
+                request.CategoryId,
                 request.Price,
                 request.Cycle,
                 request.NextPaymentDate,
@@ -107,7 +115,7 @@ public sealed class SubscriptionService(
         subscription.UpdateDetails(
             request.Name,
             request.Vendor,
-            request.Category.ToLowerInvariant(),
+            category.Id,
             request.Price,
             request.Cycle,
             request.NextPaymentDate,
@@ -118,7 +126,7 @@ public sealed class SubscriptionService(
             request.LogoUrl);
 
         await repository.SaveChangesAsync(cancellationToken);
-        return ToDto(subscription);
+        return ToDto(subscription, category.Name);
     }
 
     public async Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, DateOnly? cancelledAt, CancellationToken cancellationToken = default)
@@ -136,7 +144,8 @@ public sealed class SubscriptionService(
         subscription.UpdateStatus(status, effectiveCancelledAt);
         await repository.SaveChangesAsync(cancellationToken);
 
-        return ToDto(subscription);
+        var category = await categoryRepository.GetByIdAsync(subscription.CategoryId, cancellationToken);
+        return ToDto(subscription, category?.Name ?? string.Empty);
     }
 
     public async Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default)
@@ -204,13 +213,14 @@ public sealed class SubscriptionService(
         return subscription.Cycle is BillingCycle.Yearly ? subscription.Price : subscription.Price * 12m;
     }
 
-    private static SubscriptionDto ToDto(Subscription subscription)
+    private static SubscriptionDto ToDto(Subscription subscription, string categoryName)
     {
         return new SubscriptionDto(
             subscription.Id,
             subscription.Name,
             subscription.Vendor,
-            subscription.Category,
+            subscription.CategoryId,
+            categoryName,
             subscription.Price,
             subscription.Cycle,
             subscription.NextPaymentDate,
@@ -306,7 +316,7 @@ public sealed class SubscriptionService(
         return domain.All(c => char.IsLetterOrDigit(c) || c is '.' or '-');
     }
 
-    private async Task ValidateRequestAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken)
+    private async Task<Category> ValidateRequestAsync(CreateSubscriptionRequest request, CancellationToken cancellationToken)
     {
         if (request.Price <= 0m)
         {
@@ -318,15 +328,17 @@ public sealed class SubscriptionService(
             throw new ArgumentOutOfRangeException(nameof(request.CancelledAt), "Cancelled date cannot be earlier than start date.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Category))
+        if (request.CategoryId == Guid.Empty)
         {
-            throw new ArgumentException("Category is required.", nameof(request.Category));
+            throw new ArgumentException("Category is required.", nameof(request.CategoryId));
         }
 
-        var category = await categoryRepository.GetByNameAsync(request.Category.ToLowerInvariant(), cancellationToken);
+        var category = await categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
         if (category is null)
         {
-            throw new ArgumentException($"Unknown category '{request.Category}'.", nameof(request.Category));
+            throw new ArgumentException($"Unknown category '{request.CategoryId}'.", nameof(request.CategoryId));
         }
+
+        return category;
     }
 }

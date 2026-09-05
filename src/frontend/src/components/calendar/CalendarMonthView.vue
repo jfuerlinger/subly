@@ -100,7 +100,7 @@ function dayTotal(payments: CalendarPaymentEntry[]): number {
               v-for="entry in cell.payments"
               :key="entry.subscription.id"
               class="month-payment-chip"
-              :style="{ '--chip-color': categoryColor(entry.subscription.category) }"
+              :style="{ '--chip-color': categoryColor(entry.subscription.categoryName) }"
               :title="`${entry.subscription.name} – ${formatCurrency(entry.amount)}`"
             >
               <span class="month-payment-chip-dot" />

@@ -14,7 +14,7 @@ public sealed class Subscription
 
     public string Vendor { get; private set; } = string.Empty;
 
-    public string Category { get; private set; } = string.Empty;
+    public Guid CategoryId { get; private set; }
 
     public decimal Price { get; private set; }
 
@@ -38,7 +38,7 @@ public sealed class Subscription
         Guid userId,
         string name,
         string vendor,
-        string category,
+        Guid categoryId,
         decimal price,
         BillingCycle cycle,
         DateOnly nextPaymentDate,
@@ -64,9 +64,9 @@ public sealed class Subscription
             throw new ArgumentException("Vendor is required.", nameof(vendor));
         }
 
-        if (string.IsNullOrWhiteSpace(category))
+        if (categoryId == Guid.Empty)
         {
-            throw new ArgumentException("Category is required.", nameof(category));
+            throw new ArgumentException("Category is required.", nameof(categoryId));
         }
 
         if (price <= 0)
@@ -100,7 +100,7 @@ public sealed class Subscription
             UserId = userId,
             Name = name.Trim(),
             Vendor = vendor.Trim(),
-            Category = category.Trim(),
+            CategoryId = categoryId,
             Price = price,
             Cycle = cycle,
             NextPaymentDate = nextPaymentDate,
@@ -140,7 +140,7 @@ public sealed class Subscription
     public void UpdateDetails(
         string name,
         string vendor,
-        string category,
+        Guid categoryId,
         decimal price,
         BillingCycle cycle,
         DateOnly nextPaymentDate,
@@ -160,9 +160,9 @@ public sealed class Subscription
             throw new ArgumentException("Vendor is required.", nameof(vendor));
         }
 
-        if (string.IsNullOrWhiteSpace(category))
+        if (categoryId == Guid.Empty)
         {
-            throw new ArgumentException("Category is required.", nameof(category));
+            throw new ArgumentException("Category is required.", nameof(categoryId));
         }
 
         if (price <= 0)
@@ -192,7 +192,7 @@ public sealed class Subscription
 
         Name = name.Trim();
         Vendor = vendor.Trim();
-        Category = category.Trim();
+        CategoryId = categoryId;
         Price = price;
         Cycle = cycle;
         NextPaymentDate = nextPaymentDate;
@@ -205,6 +205,16 @@ public sealed class Subscription
         {
             LogoUrl = NormalizeLogoUrl(logoUrl);
         }
+    }
+
+    public void ReassignCategory(Guid categoryId)
+    {
+        if (categoryId == Guid.Empty)
+        {
+            throw new ArgumentException("Category is required.", nameof(categoryId));
+        }
+
+        CategoryId = categoryId;
     }
 
     private static string? NormalizeLogoUrl(string? logoUrl)

@@ -16,16 +16,19 @@ public sealed class SubscriptionServiceTests
     public async Task GetDashboardSummaryAsync_ShouldCalculateAggregates()
     {
         var now = new DateOnly(2026, 5, 16);
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var streamingId = categoryRepository.IdOf("streaming");
+        var softwareId = categoryRepository.IdOf("software");
         var repository = new InMemorySubscriptionRepository(
         [
-            Subscription.Create(CurrentUserId, "Netflix", "Netflix", "streaming", 17.99m, BillingCycle.Monthly, now.AddDays(5), "Visa", now.AddYears(-1)),
-            Subscription.Create(CurrentUserId, "Prime", "Amazon", "streaming", 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
-            Subscription.Create(CurrentUserId, "Paused", "Provider", "software", 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), status: SubscriptionStatus.Paused),
-            Subscription.Create(OtherUserId, "Other", "Provider", "software", 12m, BillingCycle.Monthly, now.AddDays(4), "Visa", now.AddMonths(-3)),
+            Subscription.Create(CurrentUserId, "Netflix", "Netflix", streamingId, 17.99m, BillingCycle.Monthly, now.AddDays(5), "Visa", now.AddYears(-1)),
+            Subscription.Create(CurrentUserId, "Prime", "Amazon", streamingId, 89.90m, BillingCycle.Yearly, now.AddDays(14), "PayPal", now.AddYears(-2)),
+            Subscription.Create(CurrentUserId, "Paused", "Provider", softwareId, 10m, BillingCycle.Monthly, now.AddDays(7), "Visa", now.AddMonths(-3), status: SubscriptionStatus.Paused),
+            Subscription.Create(OtherUserId, "Other", "Provider", softwareId, 12m, BillingCycle.Monthly, now.AddDays(4), "Visa", now.AddMonths(-3)),
         ]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
 
@@ -43,15 +46,16 @@ public sealed class SubscriptionServiceTests
     {
         var now = new DateOnly(2026, 5, 16);
         var repository = new InMemorySubscriptionRepository();
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
         var request = new CreateSubscriptionRequest(
             Name: "ChatGPT Plus",
             Vendor: "OpenAI",
-            Category: "software",
+            CategoryId: categoryRepository.IdOf("software"),
             Price: 22m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: now.AddDays(3),
@@ -91,11 +95,12 @@ public sealed class SubscriptionServiceTests
     public async Task UpdateStatusAsync_ShouldSetCancelledDateToToday_WhenNoDateIsProvided()
     {
         var now = new DateOnly(2026, 5, 16);
-        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", categoryRepository.IdOf("software"), 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
         var repository = new InMemorySubscriptionRepository([existing]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
 
@@ -110,18 +115,19 @@ public sealed class SubscriptionServiceTests
     public async Task UpdateSubscriptionAsync_ShouldUpdateExistingSubscription()
     {
         var now = new DateOnly(2026, 5, 16);
-        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", categoryRepository.IdOf("software"), 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
         var repository = new InMemorySubscriptionRepository([existing]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
 
         var request = new UpdateSubscriptionRequest(
             Name: "Notion Plus",
             Vendor: "Notion Labs",
-            Category: "software",
+            CategoryId: categoryRepository.IdOf("software"),
             Price: 11.99m,
             Cycle: BillingCycle.Yearly,
             NextPaymentDate: now.AddMonths(1),
@@ -142,11 +148,12 @@ public sealed class SubscriptionServiceTests
     public async Task UpdateSubscriptionAsync_ShouldSetStatusToCancelled_WhenCancelledAtIsProvided()
     {
         var now = new DateOnly(2026, 5, 16);
-        var existing = Subscription.Create(CurrentUserId, "Linear", "Linear", "software", 9m, BillingCycle.Monthly, now.AddDays(2), "Visa", now.AddMonths(-10));
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var existing = Subscription.Create(CurrentUserId, "Linear", "Linear", categoryRepository.IdOf("software"), 9m, BillingCycle.Monthly, now.AddDays(2), "Visa", now.AddMonths(-10));
         var repository = new InMemorySubscriptionRepository([existing]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
 
@@ -154,7 +161,7 @@ public sealed class SubscriptionServiceTests
         var request = new UpdateSubscriptionRequest(
             Name: "Linear",
             Vendor: "Linear",
-            Category: "software",
+            CategoryId: categoryRepository.IdOf("software"),
             Price: 9m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: now.AddDays(10),
@@ -172,11 +179,12 @@ public sealed class SubscriptionServiceTests
     [Fact]
     public async Task DeleteSubscriptionAsync_ShouldRemoveExistingSubscription()
     {
-        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", "software", 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", categoryRepository.IdOf("software"), 9.5m, BillingCycle.Monthly, new DateOnly(2026, 5, 18), "PayPal", new DateOnly(2025, 1, 1));
         var repository = new InMemorySubscriptionRepository([existing]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(new DateOnly(2026, 5, 16)));
 
@@ -191,15 +199,17 @@ public sealed class SubscriptionServiceTests
     public async Task GetSubscriptionsAsync_ShouldReturnSubscriptionsOrderedByName()
     {
         var now = new DateOnly(2026, 5, 16);
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var softwareId = categoryRepository.IdOf("software");
         var repository = new InMemorySubscriptionRepository(
         [
-            Subscription.Create(CurrentUserId, "Zeta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
-            Subscription.Create(CurrentUserId, "Alpha", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
-            Subscription.Create(OtherUserId, "Beta", "Vendor", "software", 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(CurrentUserId, "Zeta", "Vendor", softwareId, 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(CurrentUserId, "Alpha", "Vendor", softwareId, 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
+            Subscription.Create(OtherUserId, "Beta", "Vendor", softwareId, 10m, BillingCycle.Monthly, now.AddDays(1), "Visa", now),
         ]);
         var service = new SubscriptionService(
             repository,
-            new InMemoryCategoryRepository(DefaultCategories),
+            categoryRepository,
             new FixedCurrentUserProvider(CurrentUserId),
             new FixedDateProvider(now));
 
@@ -207,6 +217,31 @@ public sealed class SubscriptionServiceTests
 
         result.Select(x => x.Name).Should().ContainInOrder("Alpha", "Zeta");
         result.Should().OnlyContain(x => x.Name != "Beta");
+    }
+
+    [Fact]
+    public async Task GetSubscriptionAsync_ShouldReflectCurrentCategoryName_AfterCategoryIsRenamed()
+    {
+        var now = new DateOnly(2026, 5, 16);
+        var categoryRepository = new InMemoryCategoryRepository(DefaultCategories);
+        var softwareId = categoryRepository.IdOf("software");
+        var existing = Subscription.Create(CurrentUserId, "Notion", "Notion", softwareId, 9.5m, BillingCycle.Monthly, now.AddDays(2), "PayPal", now.AddMonths(-10));
+        var repository = new InMemorySubscriptionRepository([existing]);
+        var subscriptionService = new SubscriptionService(
+            repository,
+            categoryRepository,
+            new FixedCurrentUserProvider(CurrentUserId),
+            new FixedDateProvider(now));
+        var categoryService = new CategoryService(categoryRepository);
+
+        await categoryService.RenameCategoryAsync(softwareId, "productivity");
+        var afterRename = await subscriptionService.GetSubscriptionAsync(existing.Id);
+        var listedAfterRename = await subscriptionService.GetSubscriptionsAsync();
+
+        afterRename.Should().NotBeNull();
+        afterRename!.CategoryId.Should().Be(softwareId);
+        afterRename.CategoryName.Should().Be("productivity");
+        listedAfterRename.Single().CategoryName.Should().Be("productivity");
     }
 
     [Fact]
@@ -276,6 +311,8 @@ public sealed class SubscriptionServiceTests
     private sealed class InMemoryCategoryRepository(IEnumerable<string>? seedNames = null) : ICategoryRepository
     {
         private readonly List<Category> _items = seedNames?.Select(Category.Create).ToList() ?? [];
+
+        public Guid IdOf(string name) => _items.Single(c => c.Name == name).Id;
 
         public Task<IReadOnlyList<Category>> ListAsync(CancellationToken cancellationToken = default)
         {

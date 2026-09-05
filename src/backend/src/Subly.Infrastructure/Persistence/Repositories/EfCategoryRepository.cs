@@ -29,6 +29,28 @@ internal sealed class EfCategoryRepository(SublyDbContext dbContext) : ICategory
         await dbContext.Categories.AddAsync(category, cancellationToken);
     }
 
+    public Task<bool> HasSubscriptionsAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Subscriptions.AnyAsync(s => s.CategoryId == categoryId, cancellationToken);
+    }
+
+    public async Task ReassignSubscriptionsAsync(Guid sourceCategoryId, Guid targetCategoryId, CancellationToken cancellationToken = default)
+    {
+        var subscriptions = await dbContext.Subscriptions
+            .Where(s => s.CategoryId == sourceCategoryId)
+            .ToListAsync(cancellationToken);
+
+        foreach (var subscription in subscriptions)
+        {
+            subscription.ReassignCategory(targetCategoryId);
+        }
+    }
+
+    public void Remove(Category category)
+    {
+        dbContext.Categories.Remove(category);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);

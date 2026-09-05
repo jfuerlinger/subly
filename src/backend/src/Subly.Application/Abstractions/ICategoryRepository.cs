@@ -12,5 +12,11 @@ public interface ICategoryRepository
 
     Task AddAsync(Category category, CancellationToken cancellationToken = default);
 
+    Task<bool> HasSubscriptionsAsync(Guid categoryId, CancellationToken cancellationToken = default);
+
+    Task ReassignSubscriptionsAsync(Guid sourceCategoryId, Guid targetCategoryId, CancellationToken cancellationToken = default);
+
+    void Remove(Category category);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

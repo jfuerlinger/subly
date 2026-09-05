@@ -52,4 +52,27 @@ public sealed class CategoryService(ICategoryRepository repository) : ICategoryS
 
         return new CategoryDto(category.Id, category.Name);
     }
+
+    public async Task DeleteCategoryAsync(Guid id, Guid? replacementCategoryId, CancellationToken cancellationToken = default)
+    {
+        var category = await repository.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Category '{id}' not found.");
+
+        var hasSubscriptions = await repository.HasSubscriptionsAsync(id, cancellationToken);
+        if (hasSubscriptions)
+        {
+            if (!replacementCategoryId.HasValue || replacementCategoryId.Value == id)
+            {
+                throw new ArgumentException("A different replacement category is required for a category with subscriptions.", nameof(replacementCategoryId));
+            }
+
+            var replacementCategory = await repository.GetByIdAsync(replacementCategoryId.Value, cancellationToken)
+                ?? throw new ArgumentException("The replacement category does not exist.", nameof(replacementCategoryId));
+
+            await repository.ReassignSubscriptionsAsync(category.Id, replacementCategory.Id, cancellationToken);
+        }
+
+        repository.Remove(category);
+        await repository.SaveChangesAsync(cancellationToken);
+    }
 }

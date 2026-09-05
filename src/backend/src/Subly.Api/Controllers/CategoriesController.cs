@@ -52,4 +52,28 @@ public sealed class CategoriesController(ICategoryService service) : ControllerB
             return ValidationProblem(detail: exception.Message);
         }
     }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromBody] DeleteCategoryRequest? request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await service.DeleteCategoryAsync(id, request?.ReplacementCategoryId, cancellationToken);
+            return NoContent();
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { detail = exception.Message });
+        }
+        catch (ArgumentException exception)
+        {
+            return ValidationProblem(detail: exception.Message);
+        }
+    }
 }

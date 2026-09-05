@@ -44,10 +44,11 @@ public sealed class AdminEndpointsTests(CustomWebApplicationFactory factory) : I
     {
         var client = factory.CreateClient();
         var authClient = await CreateAuthenticatedClientAsync(client, $"admin-delete-{Guid.NewGuid():N}@example.com");
+        var categories = await authClient.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/categories", JsonOptions);
         await authClient.PostAsJsonAsync("/api/subscriptions", new CreateSubscriptionRequest(
             Name: "Cleanup",
             Vendor: "OpenAI",
-            Category: "software",
+            CategoryId: categories!.Single(c => c.Name == "software").Id,
             Price: 20m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: new DateOnly(2026, 5, 20),

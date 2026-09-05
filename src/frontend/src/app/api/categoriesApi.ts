@@ -19,3 +19,9 @@ export async function renameCategory(id: string, name: string): Promise<Category
   const response = await apiClient.patch<CategoryDto>(`/categories/${id}/name`, { name })
   return response.data
 }
+
+export async function deleteCategory(id: string, replacementCategoryId?: string): Promise<void> {
+  await apiClient.delete(`/categories/${id}`, {
+    data: replacementCategoryId ? { replacementCategoryId } : undefined,
+  })
+}

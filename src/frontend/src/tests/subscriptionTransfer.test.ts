@@ -10,7 +10,8 @@ const sampleSubscription: Subscription = {
   name: 'Netflix',
   vendor: 'Netflix',
   logoUrl: null,
-  category: 'streaming',
+  categoryId: 'cat-streaming',
+  categoryName: 'streaming',
   price: 17.99,
   cycle: 'monthly',
   nextPaymentDate: '2026-05-20',
@@ -38,6 +39,7 @@ describe('subscriptionTransfer', () => {
       subscriptions: [
         {
           ...sampleSubscription,
+          category: 'streaming',
           status: 'paused',
         },
       ],
@@ -54,6 +56,7 @@ describe('subscriptionTransfer', () => {
     const json = JSON.stringify([
       {
         ...sampleSubscription,
+        category: 'streaming',
         status: undefined,
         cancelledAt: '2026-05-01',
       },
@@ -69,14 +72,17 @@ describe('subscriptionTransfer', () => {
     const json = JSON.stringify([
       {
         ...sampleSubscription,
+        category: 'streaming',
         logoUrl: null,
       },
       {
         ...sampleSubscription,
+        category: 'streaming',
         logoUrl: '',
       },
       {
         ...sampleSubscription,
+        category: 'streaming',
       },
     ])
 
@@ -91,6 +97,7 @@ describe('subscriptionTransfer', () => {
     const json = JSON.stringify([
       {
         ...sampleSubscription,
+        category: 'streaming',
         logoUrl: 42,
       },
     ])
@@ -104,6 +111,7 @@ describe('subscriptionTransfer', () => {
     const json = JSON.stringify([
       {
         ...sampleSubscription,
+        category: 'streaming',
         cycle: 'weekly',
       },
     ])
@@ -144,6 +152,7 @@ describe('subscriptionTransfer', () => {
       subscriptions: [
         {
           ...sampleSubscription,
+          category: 'streaming',
           nextPaymentDate: '2026-99-99',
         },
       ],
