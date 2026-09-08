@@ -15,7 +15,7 @@ public sealed class Category
         return new Category
         {
             Id = Guid.NewGuid(),
-            Name = name.Trim().ToLowerInvariant(),
+            Name = name.Trim(),
         };
     }
 
@@ -24,6 +24,6 @@ public sealed class Category
         if (string.IsNullOrWhiteSpace(newName))
             throw new ArgumentException("Category name is required.", nameof(newName));
 
-        Name = newName.Trim().ToLowerInvariant();
+        Name = newName.Trim();
     }
 }

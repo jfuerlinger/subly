@@ -15,6 +15,8 @@ public interface ISubscriptionService
 
     Task<SubscriptionDto?> UpdateStatusAsync(Guid id, SubscriptionStatus status, DateOnly? cancelledAt, CancellationToken cancellationToken = default);
 
+    Task<SubscriptionDto?> UpdateCategoryAsync(Guid id, Guid categoryId, CancellationToken cancellationToken = default);
+
     Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken cancellationToken = default);

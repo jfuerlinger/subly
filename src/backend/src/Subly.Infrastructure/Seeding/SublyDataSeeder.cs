@@ -13,15 +13,15 @@ public static class SublyDataSeeder
 
     private static readonly string[] DefaultCategories =
     [
-        "streaming",
-        "software",
-        "insurance",
-        "telecom",
-        "energy",
-        "fitness",
-        "news",
-        "cloud",
-        "membership",
+        "Streaming",
+        "Software",
+        "Insurance",
+        "Telecom",
+        "Energy",
+        "Fitness",
+        "News",
+        "Cloud",
+        "Membership",
     ];
 
     public static async Task SeedAsync(SublyDbContext dbContext, IPasswordHasher passwordHasher, CancellationToken cancellationToken = default)
@@ -45,12 +45,12 @@ public static class SublyDataSeeder
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var data = new[]
         {
-            Subscription.Create(demoUser.Id, "Netflix Standard", "Netflix", categoryIds["streaming"], 17.99m, BillingCycle.Monthly, today.AddDays(6), "Visa •• 4421", today.AddYears(-4)),
-            Subscription.Create(demoUser.Id, "Spotify Family", "Spotify", categoryIds["streaming"], 17.99m, BillingCycle.Monthly, today.AddDays(2), "PayPal", today.AddYears(-3)),
-            Subscription.Create(demoUser.Id, "ChatGPT Plus", "OpenAI", categoryIds["software"], 22m, BillingCycle.Monthly, today.AddDays(3), "Visa •• 4421", today.AddYears(-1)),
-            Subscription.Create(demoUser.Id, "Amazon Prime", "Amazon", categoryIds["membership"], 89.90m, BillingCycle.Yearly, today.AddMonths(2), "Mastercard •• 0044", today.AddYears(-6)),
-            Subscription.Create(demoUser.Id, "iCloud+ 200GB", "Apple", categoryIds["cloud"], 2.99m, BillingCycle.Monthly, today.AddDays(10), "Apple Pay", today.AddYears(-5)),
-            Subscription.Create(demoUser.Id, "Gym Membership", "Fit Club", categoryIds["fitness"], 29.90m, BillingCycle.Monthly, today.AddDays(12), "SEPA", today.AddYears(-2), today.AddMonths(-1), SubscriptionStatus.Cancelled, autoRenew: false),
+            Subscription.Create(demoUser.Id, "Netflix Standard", "Netflix", categoryIds["Streaming"], 17.99m, BillingCycle.Monthly, today.AddDays(6), "Visa •• 4421", today.AddYears(-4)),
+            Subscription.Create(demoUser.Id, "Spotify Family", "Spotify", categoryIds["Streaming"], 17.99m, BillingCycle.Monthly, today.AddDays(2), "PayPal", today.AddYears(-3)),
+            Subscription.Create(demoUser.Id, "ChatGPT Plus", "OpenAI", categoryIds["Software"], 22m, BillingCycle.Monthly, today.AddDays(3), "Visa •• 4421", today.AddYears(-1)),
+            Subscription.Create(demoUser.Id, "Amazon Prime", "Amazon", categoryIds["Membership"], 89.90m, BillingCycle.Yearly, today.AddMonths(2), "Mastercard •• 0044", today.AddYears(-6)),
+            Subscription.Create(demoUser.Id, "iCloud+ 200GB", "Apple", categoryIds["Cloud"], 2.99m, BillingCycle.Monthly, today.AddDays(10), "Apple Pay", today.AddYears(-5)),
+            Subscription.Create(demoUser.Id, "Gym Membership", "Fit Club", categoryIds["Fitness"], 29.90m, BillingCycle.Monthly, today.AddDays(12), "SEPA", today.AddYears(-2), today.AddMonths(-1), SubscriptionStatus.Cancelled, autoRenew: false),
         };
 
         await dbContext.Subscriptions.AddRangeAsync(data, cancellationToken);

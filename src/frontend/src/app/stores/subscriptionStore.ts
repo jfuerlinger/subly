@@ -13,6 +13,7 @@ import {
   fetchDashboardSummary,
   fetchSubscriptions,
   updateSubscription,
+  updateSubscriptionCategory,
   updateSubscriptionStatus,
 } from '../api/subscriptionsApi'
 import { buildDashboardSummary } from '../utils/subscriptionMath'
@@ -84,6 +85,14 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     throw new Error(firstErrorMessage)
   }
 
+  async function updateCategory(id: string, categoryId: string): Promise<void> {
+    const updated = await updateSubscriptionCategory(id, categoryId)
+    subscriptions.value = subscriptions.value
+      .map((subscription) => (subscription.id === id ? updated : subscription))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    await refreshSummary()
+  }
+
   async function updateStatus(id: string, status: SubscriptionStatus, cancelledAt?: string | null): Promise<void> {
     const updated = await updateSubscriptionStatus(id, status, cancelledAt)
     subscriptions.value = subscriptions.value.map((subscription) => (subscription.id === id ? updated : subscription))
@@ -120,6 +129,7 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
     create,
     createMany,
     update,
+    updateCategory,
     updateStatus,
     remove,
   }

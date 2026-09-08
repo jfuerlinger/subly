@@ -54,6 +54,54 @@ function toggleExpanded(id: string) {
   expandedIds.value = next
 }
 
+const draggedSubscriptionId = ref<string | null>(null)
+const moveError = ref<string | null>(null)
+
+function startTouchDragging(subscriptionId: string) {
+  draggedSubscriptionId.value = subscriptionId
+  moveError.value = null
+}
+
+function startDragging(subscriptionId: string, event: DragEvent) {
+  draggedSubscriptionId.value = subscriptionId
+  moveError.value = null
+  event.dataTransfer?.setData('text/plain', subscriptionId)
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+
+function stopDragging() {
+  draggedSubscriptionId.value = null
+}
+
+function allowDrop(event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+
+async function moveSubscription(subscriptionId: string, categoryId: string) {
+  const subscription = subscriptionStore.subscriptions.find((item) => item.id === subscriptionId)
+  if (!subscription || subscription.categoryId === categoryId) return
+
+  moveError.value = null
+  try {
+    await subscriptionStore.updateCategory(subscriptionId, categoryId)
+  } catch {
+    moveError.value = `„${subscription.name}“ konnte nicht verschoben werden.`
+  } finally {
+    stopDragging()
+  }
+}
+
+function dropSubscription(categoryId: string, event: DragEvent) {
+  event.preventDefault()
+  const subscriptionId = event.dataTransfer?.getData('text/plain') || draggedSubscriptionId.value
+  if (subscriptionId) void moveSubscription(subscriptionId, categoryId)
+}
+
+function releaseTouchDrop(categoryId: string) {
+  if (draggedSubscriptionId.value) void moveSubscription(draggedSubscriptionId.value, categoryId)
+}
+
 // ─── Rename ──────────────────────────────────────────────
 
 const renamingId = ref<string | null>(null)
@@ -205,6 +253,7 @@ onMounted(async () => {
   if (categoryStore.categories.length === 0) promises.push(categoryStore.initialize())
   if (subscriptionStore.subscriptions.length === 0) promises.push(subscriptionStore.initialize())
   await Promise.all(promises)
+  expandedIds.value = new Set(categoryStore.categories.map((category) => category.id))
 })
 </script>
 
@@ -276,7 +325,10 @@ onMounted(async () => {
         v-for="cat in enrichedCategories"
         :key="cat.id"
         class="category-card"
-        :class="{ 'category-card--expanded': expandedIds.has(cat.id) }"
+        :class="{ 'category-card--expanded': expandedIds.has(cat.id), 'category-card--drop-target': draggedSubscriptionId }"
+        @dragover="allowDrop"
+        @drop="dropSubscription(cat.id, $event)"
+        @pointerup="releaseTouchDrop(cat.id)"
       >
         <!-- Card header -->
         <div class="category-card-header">
@@ -347,6 +399,7 @@ onMounted(async () => {
         </div>
 
         <p v-if="renamingId === cat.id && renameError" class="field-error">{{ renameError }}</p>
+        <p v-if="moveError" class="field-error category-move-error">{{ moveError }}</p>
 
         <!-- Colour accent bar -->
         <div class="category-accent" :style="{ background: cat.color }" />
@@ -359,16 +412,14 @@ onMounted(async () => {
             </p>
             <ul v-else>
               <li v-for="sub in cat.subscriptions" :key="sub.id" class="subscription-list-item">
-                <span class="sub-name">{{ sub.name }}</span>
-                <span class="sub-vendor muted">{{ sub.vendor }}</span>
                 <span
-                  class="sub-status status-badge"
-                  :class="{
-                    'status-badge--success': sub.status === 'active',
-                    'status-badge--warning': sub.status === 'paused',
-                    'status-badge--danger': sub.status === 'cancelled',
-                  }"
-                >{{ sub.status }}</span>
+                  class="sub-name"
+                  draggable="true"
+                  :aria-label="`${sub.name} verschieben`"
+                  @dragstart="startDragging(sub.id, $event)"
+                  @dragend="stopDragging"
+                  @pointerdown="startTouchDragging(sub.id)"
+                >{{ sub.name }}</span>
               </li>
             </ul>
           </div>
@@ -440,6 +491,15 @@ onMounted(async () => {
 
 .category-card--expanded {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.category-card--drop-target {
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.category-card--drop-target:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .category-accent {
@@ -582,6 +642,19 @@ onMounted(async () => {
 
 .subscription-list-item:hover {
   background: var(--color-border-light);
+}
+
+.sub-name {
+  cursor: grab;
+  touch-action: none;
+}
+
+.sub-name:active {
+  cursor: grabbing;
+}
+
+.category-move-error {
+  margin: 0 1rem 0.5rem;
 }
 
 .sub-name {

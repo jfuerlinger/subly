@@ -160,6 +160,21 @@ dotnet run --project src/Subly.Cli -- subscription-suggest-logos \
 
 ---
 
+### Move Subscription to Another Category
+
+Move a subscription immediately without changing its other details.
+
+```bash
+dotnet run --project src/Subly.Cli -- subscription-update-category <subscription-id> \
+  --category-id <category-id> \
+  --token "<token>"
+```
+
+**Options:**
+- `--category-id` or `-c` (required): Target category ID
+
+---
+
 ### Update Subscription Status
 
 Change the status of an active subscription.
@@ -413,6 +428,7 @@ Exit codes:
 | GET /api/subscriptions/logo-suggestions | subscription-suggest-logos |
 | PUT /api/subscriptions/{id} | subscription-update |
 | PATCH /api/subscriptions/{id}/status | subscription-update-status |
+| PATCH /api/subscriptions/{id}/category | subscription-update-category |
 | DELETE /api/subscriptions/{id} | subscription-delete |
 | GET /api/dashboard/summary | dashboard-summary |
 | GET /api/categories | category-list |

@@ -20,13 +20,13 @@ public sealed class CategoryService(ICategoryRepository repository) : ICategoryS
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Category name is required.", nameof(name));
 
-        var normalized = name.Trim().ToLowerInvariant();
+        var trimmedName = name.Trim();
 
-        var existing = await repository.GetByNameAsync(normalized, cancellationToken);
+        var existing = await repository.GetByNameAsync(trimmedName, cancellationToken);
         if (existing is not null)
-            throw new ArgumentException($"Category '{normalized}' already exists.", nameof(name));
+            throw new ArgumentException($"Category '{trimmedName}' already exists.", nameof(name));
 
-        var category = Category.Create(normalized);
+        var category = Category.Create(trimmedName);
         await repository.AddAsync(category, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
 
@@ -41,13 +41,13 @@ public sealed class CategoryService(ICategoryRepository repository) : ICategoryS
         var category = await repository.GetByIdAsync(id, cancellationToken)
             ?? throw new KeyNotFoundException($"Category '{id}' not found.");
 
-        var normalized = newName.Trim().ToLowerInvariant();
+        var trimmedName = newName.Trim();
 
-        var existing = await repository.GetByNameAsync(normalized, cancellationToken);
+        var existing = await repository.GetByNameAsync(trimmedName, cancellationToken);
         if (existing is not null && existing.Id != id)
-            throw new ArgumentException($"Category '{normalized}' already exists.", nameof(newName));
+            throw new ArgumentException($"Category '{trimmedName}' already exists.", nameof(newName));
 
-        category.Rename(normalized);
+        category.Rename(trimmedName);
         await repository.SaveChangesAsync(cancellationToken);
 
         return new CategoryDto(category.Id, category.Name);

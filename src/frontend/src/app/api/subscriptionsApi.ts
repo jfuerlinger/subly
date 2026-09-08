@@ -37,6 +37,11 @@ export async function updateSubscription(id: string, request: UpdateSubscription
   return response.data
 }
 
+export async function updateSubscriptionCategory(id: string, categoryId: string): Promise<Subscription> {
+  const response = await apiClient.patch<Subscription>(`/subscriptions/${id}/category`, { categoryId })
+  return response.data
+}
+
 export async function deleteSubscription(id: string): Promise<void> {
   await apiClient.delete(`/subscriptions/${id}`)
 }

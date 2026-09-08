@@ -148,6 +148,26 @@ public sealed class SubscriptionService(
         return ToDto(subscription, category?.Name ?? string.Empty);
     }
 
+    public async Task<SubscriptionDto?> UpdateCategoryAsync(Guid id, Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
+        if (subscription is null)
+        {
+            return null;
+        }
+
+        var category = await categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+        if (category is null)
+        {
+            throw new ArgumentException($"Unknown category '{categoryId}'.", nameof(categoryId));
+        }
+
+        subscription.ReassignCategory(category.Id);
+        await repository.SaveChangesAsync(cancellationToken);
+        return ToDto(subscription, category.Name);
+    }
+
     public async Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var userId = currentUserProvider.GetRequiredUserId();
