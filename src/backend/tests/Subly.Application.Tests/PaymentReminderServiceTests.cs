@@ -31,6 +31,27 @@ public sealed class PaymentReminderServiceTests
     }
 
     [Fact]
+    public async Task ProcessDueRemindersAsync_ShouldPropagateAndNotLogDelivery_WhenSendAsyncThrows()
+    {
+        var today = new DateOnly(2026, 9, 8);
+        var user = CreateUser("user@example.com");
+        var subscription = Subscription.Create(user.Id, "Netflix", "Netflix", CategoryId, 17.99m, BillingCycle.Monthly, today.AddDays(3), "Visa", today.AddYears(-1));
+        var deliveryLogRepository = new InMemoryNotificationDeliveryLogRepository();
+        var service = new PaymentReminderService(
+            new InMemorySubscriptionRepository([subscription]),
+            new InMemoryUserRepository([user]),
+            new InMemoryNotificationSettingsRepository([NotificationSettings.Create(user.Id, 3, NotificationChannel.Email)]),
+            deliveryLogRepository,
+            new ThrowingEmailSender(),
+            new FixedDateProvider(today));
+
+        var act = async () => await service.ProcessDueRemindersAsync();
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        (await deliveryLogRepository.ExistsAsync(subscription.Id, NotificationChannel.Email, subscription.NextPaymentDate)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ProcessDueRemindersAsync_ShouldSkip_WhenDueDateDoesNotMatchToday()
     {
         var today = new DateOnly(2026, 9, 8);
@@ -155,6 +176,14 @@ public sealed class PaymentReminderServiceTests
         {
             SentMessages.Add((toEmail, subject, bodyHtml));
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class ThrowingEmailSender : IEmailSender
+    {
+        public Task SendAsync(string toEmail, string subject, string bodyHtml, CancellationToken cancellationToken = default)
+        {
+            throw new InvalidOperationException("smtp down");
         }
     }
 
