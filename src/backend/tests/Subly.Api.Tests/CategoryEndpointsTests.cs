@@ -25,7 +25,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
 
         result.Should().NotBeNull();
         result.Should().NotBeEmpty();
-        result!.Select(c => c.Name).Should().Contain("streaming");
+        result!.Select(c => c.Name).Should().Contain("Streaming");
     }
 
     [Fact]

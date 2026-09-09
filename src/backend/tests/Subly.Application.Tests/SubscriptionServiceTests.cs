@@ -335,6 +335,21 @@ public sealed class SubscriptionServiceTests
             return Task.CompletedTask;
         }
 
+        public Task<bool> HasSubscriptionsAsync(Guid categoryId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(false);
+        }
+
+        public Task ReassignSubscriptionsAsync(Guid sourceCategoryId, Guid targetCategoryId, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public void Remove(Category category)
+        {
+            _items.RemoveAll(c => c.Id == category.Id);
+        }
+
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;

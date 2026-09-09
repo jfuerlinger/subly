@@ -86,7 +86,7 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         var request = new UpdateSubscriptionRequest(
             Name: $"Notion Premium-{uniqueSuffix}",
             Vendor: "Notion Labs",
-            CategoryId: await GetCategoryIdAsync(client, "software"),
+            CategoryId: await GetCategoryIdAsync(client, "Software"),
             Price: 12.99m,
             Cycle: BillingCycle.Yearly,
             NextPaymentDate: new DateOnly(2026, 8, 10),
@@ -173,7 +173,7 @@ public sealed class SubscriptionEndpointsTests(CustomWebApplicationFactory facto
         return new CreateSubscriptionRequest(
             Name: name,
             Vendor: "OpenAI",
-            CategoryId: await GetCategoryIdAsync(client, "software"),
+            CategoryId: await GetCategoryIdAsync(client, "Software"),
             Price: 22m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: new DateOnly(2026, 5, 20),

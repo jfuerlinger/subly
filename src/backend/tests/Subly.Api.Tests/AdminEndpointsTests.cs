@@ -48,7 +48,7 @@ public sealed class AdminEndpointsTests(CustomWebApplicationFactory factory) : I
         await authClient.PostAsJsonAsync("/api/subscriptions", new CreateSubscriptionRequest(
             Name: "Cleanup",
             Vendor: "OpenAI",
-            CategoryId: categories!.Single(c => c.Name == "software").Id,
+            CategoryId: categories!.Single(c => c.Name == "Software").Id,
             Price: 20m,
             Cycle: BillingCycle.Monthly,
             NextPaymentDate: new DateOnly(2026, 5, 20),
