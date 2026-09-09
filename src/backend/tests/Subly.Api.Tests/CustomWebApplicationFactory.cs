@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Subly.Application.Abstractions;
 using Subly.Infrastructure.Persistence;
 
 namespace Subly.Api.Tests;
@@ -11,6 +12,8 @@ namespace Subly.Api.Tests;
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = $"subly-tests-{Guid.NewGuid():N}";
+
+    public TestEmailSender EmailSender { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -26,6 +29,18 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                     .Options;
                 return new SublyDbContext(opts);
             }));
+            services.Replace(ServiceDescriptor.Singleton<IEmailSender>(EmailSender));
         });
+    }
+}
+
+public sealed class TestEmailSender : IEmailSender
+{
+    public List<(string ToEmail, string Subject, string BodyHtml)> SentMessages { get; } = [];
+
+    public Task SendAsync(string toEmail, string subject, string bodyHtml, CancellationToken cancellationToken = default)
+    {
+        SentMessages.Add((toEmail, subject, bodyHtml));
+        return Task.CompletedTask;
     }
 }
