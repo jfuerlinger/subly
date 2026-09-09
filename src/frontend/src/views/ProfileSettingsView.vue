@@ -1,19 +1,37 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useThemeStore, type ThemeMode } from '../app/stores/themeStore'
 import { useProfileStore } from '../app/stores/profileStore'
+import { useNotificationSettingsStore } from '../app/stores/notificationSettingsStore'
 
 const themeStore = useThemeStore()
 const profileStore = useProfileStore()
+const notificationSettingsStore = useNotificationSettingsStore()
 
 const firstNameInput = ref(profileStore.firstName)
 const lastNameInput = ref(profileStore.lastName)
 const saved = ref(false)
 
+const leadDaysInput = ref(3)
+const emailEnabledInput = ref(false)
+const notificationSettingsSaved = ref(false)
+
 function saveName() {
   profileStore.setName(firstNameInput.value.trim(), lastNameInput.value.trim())
   saved.value = true
   setTimeout(() => { saved.value = false }, 2000)
+}
+
+onMounted(async () => {
+  await notificationSettingsStore.initialize()
+  leadDaysInput.value = notificationSettingsStore.leadDays
+  emailEnabledInput.value = notificationSettingsStore.emailEnabled
+})
+
+async function saveNotificationSettings() {
+  await notificationSettingsStore.save(leadDaysInput.value, emailEnabledInput.value)
+  notificationSettingsSaved.value = true
+  setTimeout(() => { notificationSettingsSaved.value = false }, 2000)
 }
 
 interface ThemeOption {
@@ -53,6 +71,26 @@ const themeOptions: ThemeOption[] = [
         <div class="name-actions">
           <button type="submit" class="btn-primary">Speichern</button>
           <span v-if="saved" class="save-feedback">✓ Gespeichert</span>
+        </div>
+      </form>
+    </div>
+
+    <div class="card profile-section">
+      <h3>Zahlungserinnerungen</h3>
+      <p class="muted" style="margin-bottom: 1rem;">Erhalte eine E-Mail, bevor ein Abo abgebucht wird.</p>
+
+      <form class="name-form" @submit.prevent="saveNotificationSettings">
+        <label class="checkbox-field">
+          <input v-model="emailEnabledInput" type="checkbox" />
+          E-Mail-Erinnerungen aktivieren
+        </label>
+        <div class="form-field" style="max-width: 160px;">
+          <label for="lead-days">Tage vorher</label>
+          <input id="lead-days" v-model.number="leadDaysInput" type="number" min="0" max="90" />
+        </div>
+        <div class="name-actions">
+          <button type="submit" class="btn-primary">Speichern</button>
+          <span v-if="notificationSettingsSaved" class="save-feedback">✓ Gespeichert</span>
         </div>
       </form>
     </div>
@@ -207,5 +245,13 @@ const themeOptions: ThemeOption[] = [
   color: var(--color-primary);
   background: var(--color-primary-light);
   font-weight: 600;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
 }
 </style>
