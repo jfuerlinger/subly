@@ -32,6 +32,9 @@ public static class DependencyInjection
         services.AddSingleton<IDateProvider, SystemDateProvider>();
         services.AddScoped<IAdminService, AdminService>();
 
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
         return services;
     }
 
