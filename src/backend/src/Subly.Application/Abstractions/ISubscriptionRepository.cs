@@ -6,6 +6,8 @@ public interface ISubscriptionRepository
 {
     Task<IReadOnlyList<Subscription>> ListAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Subscription>> ListAllActiveAsync(CancellationToken cancellationToken = default);
+
     Task<Subscription?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default);
 
     Task AddAsync(Subscription subscription, CancellationToken cancellationToken = default);

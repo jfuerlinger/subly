@@ -302,6 +302,11 @@ public sealed class SubscriptionServiceTests
             return Task.FromResult<IReadOnlyList<Subscription>>(_items.Where(x => x.UserId == userId).ToList());
         }
 
+        public Task<IReadOnlyList<Subscription>> ListAllActiveAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<Subscription>>(_items.Where(x => x.Status == SubscriptionStatus.Active).ToList());
+        }
+
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;

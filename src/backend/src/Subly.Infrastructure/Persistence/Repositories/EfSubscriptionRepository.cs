@@ -14,6 +14,14 @@ public sealed class EfSubscriptionRepository(SublyDbContext dbContext) : ISubscr
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Subscription>> ListAllActiveAsync(CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Subscriptions
+            .AsNoTracking()
+            .Where(x => x.Status == SubscriptionStatus.Active)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Subscription?> GetByIdAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
     {
         return dbContext.Subscriptions.SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
