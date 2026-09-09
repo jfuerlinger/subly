@@ -25,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddScoped<ICategoryRepository, EfCategoryRepository>();
         services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<INotificationSettingsRepository, EfNotificationSettingsRepository>();
+        services.AddScoped<INotificationDeliveryLogRepository, EfNotificationDeliveryLogRepository>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<IDateProvider, SystemDateProvider>();
