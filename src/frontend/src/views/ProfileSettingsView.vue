@@ -84,18 +84,21 @@ const themeOptions: ThemeOption[] = [
     <div class="card profile-section">
       <h3>Zahlungserinnerungen</h3>
       <p class="muted" style="margin-bottom: 1rem;">Erhalte eine E-Mail, bevor ein Abo abgebucht wird.</p>
+      <p v-if="notificationSettingsStore.error" class="load-error" style="margin-bottom: 1rem;">
+        ⚠ {{ notificationSettingsStore.error }} Zum Schutz deiner gespeicherten Einstellungen ist Speichern deaktiviert.
+      </p>
 
       <form class="name-form" @submit.prevent="saveNotificationSettings">
         <label class="checkbox-field">
-          <input v-model="emailEnabledInput" type="checkbox" />
+          <input v-model="emailEnabledInput" type="checkbox" :disabled="!!notificationSettingsStore.error" />
           E-Mail-Erinnerungen aktivieren
         </label>
         <div class="form-field" style="max-width: 160px;">
           <label for="lead-days">Tage vorher</label>
-          <input id="lead-days" v-model.number="leadDaysInput" type="number" min="0" max="90" />
+          <input id="lead-days" v-model.number="leadDaysInput" type="number" min="0" max="90" :disabled="!!notificationSettingsStore.error" />
         </div>
         <div class="name-actions">
-          <button type="submit" class="btn-primary">Speichern</button>
+          <button type="submit" class="btn-primary" :disabled="!!notificationSettingsStore.error">Speichern</button>
           <span v-if="notificationSettingsSaved" class="save-feedback">✓ Gespeichert</span>
           <span v-if="notificationSettingsSaveFailed" class="save-feedback save-feedback--error">✗ Fehler beim Speichern</span>
         </div>
@@ -209,7 +212,7 @@ const themeOptions: ThemeOption[] = [
   transition: opacity 0.15s;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   opacity: 0.88;
 }
 
@@ -221,6 +224,16 @@ const themeOptions: ThemeOption[] = [
 
 .save-feedback--error {
   color: var(--color-danger);
+}
+
+.load-error {
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .theme-options {
