@@ -15,6 +15,7 @@ const saved = ref(false)
 const leadDaysInput = ref(3)
 const emailEnabledInput = ref(false)
 const notificationSettingsSaved = ref(false)
+const notificationSettingsSaveFailed = ref(false)
 
 function saveName() {
   profileStore.setName(firstNameInput.value.trim(), lastNameInput.value.trim())
@@ -29,9 +30,14 @@ onMounted(async () => {
 })
 
 async function saveNotificationSettings() {
-  await notificationSettingsStore.save(leadDaysInput.value, emailEnabledInput.value)
-  notificationSettingsSaved.value = true
-  setTimeout(() => { notificationSettingsSaved.value = false }, 2000)
+  try {
+    await notificationSettingsStore.save(leadDaysInput.value, emailEnabledInput.value)
+    notificationSettingsSaved.value = true
+    setTimeout(() => { notificationSettingsSaved.value = false }, 2000)
+  } catch {
+    notificationSettingsSaveFailed.value = true
+    setTimeout(() => { notificationSettingsSaveFailed.value = false }, 3000)
+  }
 }
 
 interface ThemeOption {
@@ -91,6 +97,7 @@ const themeOptions: ThemeOption[] = [
         <div class="name-actions">
           <button type="submit" class="btn-primary">Speichern</button>
           <span v-if="notificationSettingsSaved" class="save-feedback">✓ Gespeichert</span>
+          <span v-if="notificationSettingsSaveFailed" class="save-feedback save-feedback--error">✗ Fehler beim Speichern</span>
         </div>
       </form>
     </div>
@@ -210,6 +217,10 @@ const themeOptions: ThemeOption[] = [
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-success, #16a34a);
+}
+
+.save-feedback--error {
+  color: var(--color-danger);
 }
 
 .theme-options {
