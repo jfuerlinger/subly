@@ -74,7 +74,7 @@ No update/delete operations — write-once record.
 
 - `NotificationSettingsEntityConfiguration` and `NotificationDeliveryLogEntityConfiguration`, following the existing `*EntityConfiguration` pattern (see `SubscriptionEntityConfiguration`, `UserEntityConfiguration`).
 - `NotificationSettings`: unique index on `UserId`.
-- `NotificationDeliveryLog`: **unique index on `(SubscriptionId, Channel, ForPaymentDate)`**. This is the hard guarantee against duplicate sends — enforced at the database level, not only in application logic, so a race between concurrent background-service ticks cannot double-send.
+- `NotificationDeliveryLog`: **unique index on `(SubscriptionId, Channel, ForPaymentDate)`**. This guarantees at most one delivery-log *row* per subscription/channel/date at the database level, not at most one *email* — two truly concurrent callers could both pass the `ExistsAsync` check and send before the index rejects the second row. That race cannot occur in the current single-instance, sequential-tick deployment (see `PaymentReminderService`), but the index alone would not prevent it if this service were ever run with multiple concurrent callers.
 - One new EF Core migration adding both tables.
 
 ### Repository interfaces (`Subly.Application.Abstractions`)

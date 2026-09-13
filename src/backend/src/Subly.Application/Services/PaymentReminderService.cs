@@ -32,6 +32,8 @@ public sealed class PaymentReminderService(
                     continue;
                 }
 
+                // Safe only because this runs single-instance/sequential today (one `api` resource, one PeriodicTimer loop).
+                // A concurrent caller could pass this check and both send before the unique index rejects the duplicate log row.
                 var alreadySent = await deliveryLogRepository.ExistsAsync(subscription.Id, NotificationChannel.Email, subscription.NextPaymentDate, cancellationToken);
                 if (alreadySent)
                 {
