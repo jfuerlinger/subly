@@ -31,6 +31,12 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set the existing Subly JWT signing key}
+      McpAccess__Issuer: ${CF_ACCESS_ISSUER:-}
+      McpAccess__Audience: ${CF_ACCESS_MCP_AUD:-}
+      McpAccess__Email: ${CF_ACCESS_EMAIL:-}
+      McpAccess__Subject: ${CF_ACCESS_SUBJECT:-}
+      McpAccess__UserId: ${SUBLY_MCP_USER_ID:-}
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-sublydb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}"
     depends_on:
       postgres:

@@ -394,6 +394,14 @@ dotnet run --project src/Subly.Cli -- subscription-delete <subscription-id> --ye
 
 ---
 
+## MCP discovery
+
+Set `SUBLY_MCP_ACCESS_TOKEN` in the process environment to a current Cloudflare Managed OAuth access token for the Subly MCP application. The `--api-url` (`-u`) option takes the base URL. Existing subscription verbs above use the Subly API token.
+
+```bash
+dotnet run --project src/Subly.Cli -- mcp-tools --api-url https://subly.hey-joe.tech
+```
+
 ## Error Handling
 
 The CLI provides clear error messages for common issues:
@@ -420,6 +428,7 @@ Exit codes:
 
 | Endpoint | CLI Verb |
 |----------|----------|
+| POST /mcp (initialize, tools/list) | mcp-tools |
 | POST /api/auth/register | auth-register |
 | POST /api/auth/login | auth-login |
 | GET /api/subscriptions | subscription-list |

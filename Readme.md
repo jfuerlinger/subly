@@ -3,6 +3,12 @@
 Subly ist eine Full-Stack-Anwendung zur Verwaltung von Abonnements.  
 Die App bietet ein Dashboard mit Kennzahlen (monatlich/jährlich/anstehende Zahlungen) sowie CRUD-Funktionen für Abos inkl. Statuswechsel (aktiv, pausiert, gekündigt).
 
+## Abos über MCP verwalten
+
+Verbinde einen MCP-Client über Streamable HTTP mit `https://subly.hey-joe.tech/mcp` und melde dich im Browser über Cloudflare Access an. Der Connector kann Abos auflisten, abrufen, anlegen, vollständig bearbeiten, umkategorisieren, pausieren, als gekündigt markieren und löschen. Er kann außerdem die Kategorien und die Kostenübersicht abrufen. Eine Kündigung in Subly aktualisiert den erfassten Status. Der Vertrag beim Anbieter läuft unabhängig davon weiter.
+
+Der Endpunkt verwendet die gleichen benutzergebundenen Dienste wie die REST-API. Die eigene Cloudflare-Access-Anwendung auf dem Pfad `/mcp` braucht Managed OAuth und eine Allow-Policy für den vorgesehenen Nutzer. Das Backend validiert Signatur, Aussteller, Gültigkeit und Audience des Access-Tokens. `CF_ACCESS_EMAIL` bzw. bei Tokens ohne E-Mail die exakte `CF_ACCESS_SUBJECT` identifizieren den Nutzer. `SUBLY_MCP_USER_ID` ordnet ihm die UUID seines bestehenden Subly-Kontos zu. Die Variablen stehen in der Deployment-Vorlage unter `src/.env.deploy.example`.
+
 ## Tech-Stack
 
 - **Frontend:** Vue 3, TypeScript, Vite, Pinia, Vue Router
@@ -19,6 +25,9 @@ Die App bietet ein Dashboard mit Kennzahlen (monatlich/jährlich/anstehende Zahl
 flowchart LR
     Browser[Browser] --> Frontend["Vue SPA (Vite)"]
     Frontend -->|REST /api| Api[Subly.Api]
+    Client[MCP-Client] --> Access[Cloudflare Access]
+    Access -->|POST /mcp| Frontend
+    Frontend -->|/mcp| Api
     Api --> Application["Subly.Application<br/>SubscriptionService"]
     Application --> Repository[ISubscriptionRepository]
     Repository --> Infrastructure["Subly.Infrastructure<br/>EfSubscriptionRepository"]

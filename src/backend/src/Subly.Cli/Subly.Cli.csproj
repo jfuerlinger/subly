@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="ModelContextProtocol" Version="2.4.0" />
   </ItemGroup>
 
 </Project>

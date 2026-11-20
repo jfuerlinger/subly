@@ -2,6 +2,7 @@
 using Subly.Cli.Commands;
 
 var result = await Parser.Default.ParseArguments(args,
+    typeof(McpToolsCommand),
     typeof(AuthRegisterCommand),
     typeof(AuthLoginCommand),
     typeof(SubscriptionListCommand),
@@ -18,23 +19,26 @@ var result = await Parser.Default.ParseArguments(args,
     typeof(DatabaseResetCommand),
     typeof(CategoryRenameCommand),
     typeof(CategoryDeleteCommand))
-    .MapResult(
-        async (AuthRegisterCommand cmd) => await cmd.Execute(),
-        async (AuthLoginCommand cmd) => await cmd.Execute(),
-        async (SubscriptionListCommand cmd) => await cmd.Execute(),
-        async (SubscriptionGetCommand cmd) => await cmd.Execute(),
-        async (SubscriptionCreateCommand cmd) => await cmd.Execute(),
-        async (SubscriptionSuggestLogosCommand cmd) => await cmd.Execute(),
-        async (SubscriptionUpdateCommand cmd) => await cmd.Execute(),
-        async (SubscriptionUpdateCategoryCommand cmd) => await cmd.Execute(),
-        async (SubscriptionUpdateStatusCommand cmd) => await cmd.Execute(),
-        async (SubscriptionDeleteCommand cmd) => await cmd.Execute(),
-        async (DashboardSummaryCommand cmd) => await cmd.Execute(),
-        async (CategoryListCommand cmd) => await cmd.Execute(),
-        async (CategoryCreateCommand cmd) => await cmd.Execute(),
-        async (DatabaseResetCommand cmd) => await cmd.Execute(),
-        async (CategoryRenameCommand cmd) => await cmd.Execute(),
-        async (CategoryDeleteCommand cmd) => await cmd.Execute(),
-        errors => Task.FromResult(1));
+    .MapResult(command => command switch
+    {
+        McpToolsCommand cmd => cmd.Execute(),
+        AuthRegisterCommand cmd => cmd.Execute(),
+        AuthLoginCommand cmd => cmd.Execute(),
+        SubscriptionListCommand cmd => cmd.Execute(),
+        SubscriptionGetCommand cmd => cmd.Execute(),
+        SubscriptionCreateCommand cmd => cmd.Execute(),
+        SubscriptionSuggestLogosCommand cmd => cmd.Execute(),
+        SubscriptionUpdateCommand cmd => cmd.Execute(),
+        SubscriptionUpdateCategoryCommand cmd => cmd.Execute(),
+        SubscriptionUpdateStatusCommand cmd => cmd.Execute(),
+        SubscriptionDeleteCommand cmd => cmd.Execute(),
+        DashboardSummaryCommand cmd => cmd.Execute(),
+        CategoryListCommand cmd => cmd.Execute(),
+        CategoryCreateCommand cmd => cmd.Execute(),
+        DatabaseResetCommand cmd => cmd.Execute(),
+        CategoryRenameCommand cmd => cmd.Execute(),
+        CategoryDeleteCommand cmd => cmd.Execute(),
+        _ => Task.FromResult(1),
+    }, errors => Task.FromResult(1));
 
 Environment.Exit(result);

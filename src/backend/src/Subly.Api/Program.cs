@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Subly.Api.Authentication;
 using Subly.Api.BackgroundServices;
+using Subly.Api.Mcp;
 using Subly.Application.Abstractions;
 using Subly.Application.Services;
 using Subly.Infrastructure;
@@ -67,6 +68,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSubscriptionMcp(builder.Configuration);
 
 var app = builder.Build();
 
@@ -99,6 +101,8 @@ app.MapDefaultEndpoints();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapMcp("/mcp").RequireAuthorization(policy =>
+    policy.AddAuthenticationSchemes(McpAccess.Scheme).RequireAuthenticatedUser());
 
 app.Run();
 
