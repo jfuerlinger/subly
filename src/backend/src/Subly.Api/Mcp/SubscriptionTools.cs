@@ -25,6 +25,11 @@ public sealed class SubscriptionTools(ISubscriptionService subscriptions, ICateg
     public Task<IReadOnlyList<CategoryDto>> Categories(CancellationToken ct) =>
         categories.GetCategoriesAsync(ct);
 
+    [McpServerTool(Name = "category_create", Destructive = false, OpenWorld = false)]
+    [Description("Create a category shared by all Subly accounts. Use a unique name of up to 40 characters. Returns the ID and name for use with subscriptions.")]
+    public Task<CategoryDto> CreateCategory(string name, CancellationToken ct) =>
+        Validate(() => categories.CreateCategoryAsync(name, ct));
+
     [McpServerTool(Name = "dashboard_summary", ReadOnly = true, OpenWorld = false)]
     [Description("Summarize monthly and yearly costs, active subscriptions and payments due in the next 30 days.")]
     public Task<DashboardSummaryDto> Summary(CancellationToken ct) =>

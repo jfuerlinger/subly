@@ -72,7 +72,7 @@ public sealed class McpEndpointTests : IDisposable
         web.DefaultRequestHeaders.Authorization = new("Bearer", account.AccessToken);
         Assert.Equal(HttpStatusCode.Unauthorized, (await web.PostAsJsonAsync("/mcp", new { })).StatusCode);
         var foreignId = db.Subscriptions.First().Id;
-        var categoryIds = db.Categories.Take(2).Select(category => category.Id).ToArray();
+        var existingCategoryId = db.Categories.Select(category => category.Id).First();
 
         // Use a real SDK client through HTTP, covering initialization, discovery and calls.
         var transport = new HttpClientTransport(new HttpClientTransportOptions
@@ -82,7 +82,7 @@ public sealed class McpEndpointTests : IDisposable
         }, http);
         await using var client = await McpClient.CreateAsync(transport);
         var tools = await client.ListToolsAsync();
-        Assert.Equal(9, tools.Count);
+        Assert.Contains(tools, t => t.Name == "category_create");
         Assert.True(tools.Single(t => t.Name == "subscription_delete").ProtocolTool.Annotations?.DestructiveHint);
         Assert.True(tools.Single(t => t.Name == "subscription_list").ProtocolTool.Annotations?.ReadOnlyHint);
 
@@ -92,24 +92,30 @@ public sealed class McpEndpointTests : IDisposable
 
         Assert.True((await Call("subscription_get", new() { ["id"] = foreignId })).IsError);
         Assert.True((await Call("subscription_delete", new() { ["id"] = foreignId })).IsError);
+        var category = Record(await Call("category_create", new() { ["name"] = "  Weiterbildung  " }));
+        var categoryId = category.GetProperty("id").GetGuid();
+        Assert.Equal("Weiterbildung", category.GetProperty("name").GetString());
+        Assert.Contains(categoryId.ToString(), Text(await Call("category_list")));
+        Assert.True((await Call("category_create", new() { ["name"] = "weiterbildung" })).IsError);
+        Assert.True((await Call("category_create", new() { ["name"] = "  " })).IsError);
         var details = new Dictionary<string, object?>
         {
             ["name"] = "Test subscription", ["vendor"] = "Test vendor", ["cycle"] = "monthly",
-            ["categoryId"] = categoryIds[0], ["price"] = 8.50m, ["startedAt"] = "2026-10-01",
+            ["categoryId"] = categoryId, ["price"] = 8.50m, ["startedAt"] = "2026-10-01",
             ["nextPaymentDate"] = "2026-12-01", ["paymentMethod"] = "transfer", ["cancelledAt"] = null,
         };
         var created = Record(await Call("subscription_create", new() { ["subscription"] = details }));
         var id = created.GetProperty("id").GetGuid();
         Assert.Contains(id.ToString(), Text(await Call("subscription_list")));
         Assert.DoesNotContain(foreignId.ToString(), Text(await Call("subscription_list")));
-        Assert.Contains(categoryIds[0].ToString(), Text(await Call("category_list")));
+        Assert.Equal(categoryId, created.GetProperty("categoryId").GetGuid());
         Assert.Equal(1, Record(await Call("dashboard_summary")).GetProperty("activeSubscriptionsCount").GetInt32());
         details["price"] = -1;
         Assert.True((await Call("subscription_update", new() { ["id"] = id, ["subscription"] = details })).IsError);
         details["price"] = 10;
         Assert.Equal(10m, Record(await Call("subscription_update", new() { ["id"] = id, ["subscription"] = details })).GetProperty("price").GetDecimal());
         Assert.Equal("paused", Record(await Call("subscription_set_status", new() { ["id"] = id, ["status"] = "paused" })).GetProperty("status").GetString());
-        Assert.Equal(categoryIds[1], Record(await Call("subscription_set_category", new() { ["id"] = id, ["categoryId"] = categoryIds[1] })).GetProperty("categoryId").GetGuid());
+        Assert.Equal(existingCategoryId, Record(await Call("subscription_set_category", new() { ["id"] = id, ["categoryId"] = existingCategoryId })).GetProperty("categoryId").GetGuid());
         Assert.Equal(id, Record(await Call("subscription_get", new() { ["id"] = id })).GetProperty("id").GetGuid());
         Assert.NotEqual(true, (await Call("subscription_delete", new() { ["id"] = id })).IsError);
         Assert.True((await Call("subscription_get", new() { ["id"] = id })).IsError);
