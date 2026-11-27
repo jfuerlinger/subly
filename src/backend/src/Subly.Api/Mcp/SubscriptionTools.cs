@@ -41,7 +41,7 @@ public sealed class SubscriptionTools(ISubscriptionService subscriptions, ICateg
         Validate(() => subscriptions.CreateSubscriptionAsync(subscription, ct));
 
     [McpServerTool(Name = "subscription_update", Destructive = true, Idempotent = true, OpenWorld = false)]
-    [Description("Replace all details. Read the current record first to preserve other values. A null cancelledAt reactivates a cancelled subscription. A null logoUrl clears the logo.")]
+    [Description("Replace all details. Read the current record first to preserve other values. A null cancelledAt reactivates a cancelled subscription. A null logoUrl preserves the logo.")]
     public async Task<SubscriptionDto> Update(Guid id, UpdateSubscriptionRequest subscription, CancellationToken ct) =>
         RequireSubscription(await Validate(() => subscriptions.UpdateSubscriptionAsync(id, subscription, ct)));
 
@@ -54,6 +54,15 @@ public sealed class SubscriptionTools(ISubscriptionService subscriptions, ICateg
     [Description("Move a subscription to an existing category, preserving all other details.")]
     public async Task<SubscriptionDto> SetCategory(Guid id, Guid categoryId, CancellationToken ct) =>
         RequireSubscription(await Validate(() => subscriptions.UpdateCategoryAsync(id, categoryId, ct)));
+
+    [McpServerTool(Name = "subscription_suggest_logos", ReadOnly = true, OpenWorld = false)]
+    [Description("Suggest candidate icon URLs for a subscription name. Pass a suggested logoUrl to subscription_set_logo.")]
+    public IReadOnlyList<LogoSuggestionDto> SuggestLogos(string name) => subscriptions.GetLogoSuggestions(name);
+
+    [McpServerTool(Name = "subscription_set_logo", Destructive = true, Idempotent = true, OpenWorld = false)]
+    [Description("Set only the subscription icon. Supply an HTTP(S) image URL, an image data URL (up to 700,000 characters), or an empty string to remove the icon.")]
+    public async Task<string> SetLogo(Guid id, string logoUrl, CancellationToken ct) =>
+        await Validate(() => subscriptions.SetLogoAsync(id, logoUrl, ct)) ? "Subscription icon updated." : throw NotFound();
 
     [McpServerTool(Name = "subscription_delete", Destructive = true, OpenWorld = false)]
     [Description("Permanently delete a subscription from Subly. To record a cancellation, use subscription_set_status.")]

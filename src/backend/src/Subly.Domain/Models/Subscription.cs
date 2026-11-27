@@ -203,9 +203,11 @@ public sealed class Subscription
 
         if (logoUrl is not null)
         {
-            LogoUrl = NormalizeLogoUrl(logoUrl);
+            SetLogo(logoUrl);
         }
     }
+
+    public void SetLogo(string? logoUrl) => LogoUrl = NormalizeLogoUrl(logoUrl);
 
     public void ReassignCategory(Guid categoryId)
     {

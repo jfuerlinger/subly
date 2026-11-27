@@ -17,6 +17,8 @@ public interface ISubscriptionService
 
     Task<SubscriptionDto?> UpdateCategoryAsync(Guid id, Guid categoryId, CancellationToken cancellationToken = default);
 
+    Task<bool> SetLogoAsync(Guid id, string logoUrl, CancellationToken cancellationToken = default);
+
     Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<DashboardSummaryDto> GetDashboardSummaryAsync(CancellationToken cancellationToken = default);

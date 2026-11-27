@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,7 @@ public sealed class McpEndpointTests : IDisposable
         await using var client = await McpClient.CreateAsync(transport);
         var tools = await client.ListToolsAsync();
         Assert.Contains(tools, t => t.Name == "category_create");
+        Assert.Contains(tools, t => t.Name == "subscription_set_logo");
         Assert.True(tools.Single(t => t.Name == "subscription_delete").ProtocolTool.Annotations?.DestructiveHint);
         Assert.True(tools.Single(t => t.Name == "subscription_list").ProtocolTool.Annotations?.ReadOnlyHint);
 
@@ -116,7 +118,17 @@ public sealed class McpEndpointTests : IDisposable
         Assert.Equal(10m, Record(await Call("subscription_update", new() { ["id"] = id, ["subscription"] = details })).GetProperty("price").GetDecimal());
         Assert.Equal("paused", Record(await Call("subscription_set_status", new() { ["id"] = id, ["status"] = "paused" })).GetProperty("status").GetString());
         Assert.Equal(existingCategoryId, Record(await Call("subscription_set_category", new() { ["id"] = id, ["categoryId"] = existingCategoryId })).GetProperty("categoryId").GetGuid());
-        Assert.Equal(id, Record(await Call("subscription_get", new() { ["id"] = id })).GetProperty("id").GetGuid());
+        var suggestions = Record(await Call("subscription_suggest_logos", new() { ["name"] = "GitHub" }));
+        var logo = suggestions[0].GetProperty("logoUrl").GetString();
+        Assert.NotNull(logo);
+        var expected = JsonNode.Parse(Text(await Call("subscription_get", new() { ["id"] = id })))!.AsObject();
+        expected["logoUrl"] = logo;
+        Assert.NotEqual(true, (await Call("subscription_set_logo", new() { ["id"] = id, ["logoUrl"] = logo })).IsError);
+        Assert.True((await Call("subscription_set_logo", new() { ["id"] = foreignId, ["logoUrl"] = logo })).IsError);
+        Assert.True((await Call("subscription_set_logo", new() { ["id"] = id, ["logoUrl"] = "invalid" })).IsError);
+        Assert.True(JsonNode.DeepEquals(expected, JsonNode.Parse(Text(await Call("subscription_get", new() { ["id"] = id })))));
+        Assert.NotEqual(true, (await Call("subscription_set_logo", new() { ["id"] = id, ["logoUrl"] = "" })).IsError);
+        Assert.Equal(JsonValueKind.Null, Record(await Call("subscription_get", new() { ["id"] = id })).GetProperty("logoUrl").ValueKind);
         Assert.NotEqual(true, (await Call("subscription_delete", new() { ["id"] = id })).IsError);
         Assert.True((await Call("subscription_get", new() { ["id"] = id })).IsError);
         Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/subscriptions")).StatusCode);

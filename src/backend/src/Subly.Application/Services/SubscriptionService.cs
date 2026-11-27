@@ -168,6 +168,18 @@ public sealed class SubscriptionService(
         return ToDto(subscription, category.Name);
     }
 
+    public async Task<bool> SetLogoAsync(Guid id, string logoUrl, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserProvider.GetRequiredUserId();
+        var subscription = await repository.GetByIdAsync(id, userId, cancellationToken);
+        if (subscription is null)
+            return false;
+
+        subscription.SetLogo(logoUrl);
+        await repository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<bool> DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var userId = currentUserProvider.GetRequiredUserId();
