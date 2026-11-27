@@ -57,7 +57,7 @@ public static class SublyDataSeeder
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static async Task SeedCategoriesAsync(SublyDbContext dbContext, CancellationToken cancellationToken)
+    public static async Task SeedCategoriesAsync(SublyDbContext dbContext, CancellationToken cancellationToken)
     {
         var existingNames = dbContext.Categories.Select(c => c.Name).ToHashSet();
         var missing = DefaultCategories.Where(name => !existingNames.Contains(name)).ToArray();

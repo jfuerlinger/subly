@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subly.Application.Contracts;
 using Subly.Application.Services;
@@ -5,6 +6,7 @@ using Subly.Application.Services;
 namespace Subly.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/categories")]
 public sealed class CategoriesController(ICategoryService service) : ControllerBase
 {

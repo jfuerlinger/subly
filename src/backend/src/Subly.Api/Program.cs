@@ -95,7 +95,10 @@ if (args.Contains("--seed", StringComparer.OrdinalIgnoreCase))
     return;
 }
 
-await app.Services.EnsureDatabaseInitializedAsync(seed: true);
+// Das Demo-Konto hat ein öffentlich bekanntes Passwort und entsteht deshalb nur lokal.
+await app.Services.EnsureDatabaseInitializedAsync(
+    seed: true,
+    demoData: app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"));
 
 app.MapDefaultEndpoints();
 app.UseAuthentication();

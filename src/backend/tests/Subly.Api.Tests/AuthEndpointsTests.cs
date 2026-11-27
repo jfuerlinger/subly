@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Subly.Application.Contracts;
 
 namespace Subly.Api.Tests;
@@ -13,6 +14,22 @@ public sealed class AuthEndpointsTests(CustomWebApplicationFactory factory) : IC
     {
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
+
+    [Fact]
+    public async Task Register_ShouldReturnForbidden_WhenRegistrationIsDisabledByConfiguration()
+    {
+        var client = factory
+            .WithWebHostBuilder(builder => builder.UseSetting("Authentication:AllowRegistration", "false"))
+            .CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterUserRequest(
+            FirstName: "Max",
+            LastName: "Muster",
+            Email: $"closed-{Guid.NewGuid():N}@example.com",
+            Password: "Secure123!"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 
     [Fact]
     public async Task Register_ShouldCreateUserAndReturnToken()

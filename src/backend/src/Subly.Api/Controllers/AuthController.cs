@@ -7,13 +7,21 @@ namespace Subly.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(IAuthService authService, IHostEnvironment hostEnvironment) : ControllerBase
+public sealed class AuthController(IAuthService authService, IHostEnvironment hostEnvironment, IConfiguration configuration) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
     {
+        // Öffentlich erreichbare Instanzen lassen niemanden ein Konto anlegen, außer Authentication:AllowRegistration ist gesetzt.
+        var isLocal = hostEnvironment.IsDevelopment() || hostEnvironment.IsEnvironment("Testing");
+        if (!configuration.GetValue("Authentication:AllowRegistration", isLocal))
+        {
+            return Problem(detail: "Registration is disabled.", statusCode: StatusCodes.Status403Forbidden);
+        }
+
         try
         {
             var response = await authService.RegisterAsync(request, cancellationToken);

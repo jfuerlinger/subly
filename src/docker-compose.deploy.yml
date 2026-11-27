@@ -31,6 +31,8 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      # Registrierung ist aus; nur zum Anlegen eines Kontos vorübergehend auf true setzen.
+      Authentication__AllowRegistration: ${ALLOW_REGISTRATION:-false}
       Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set the existing Subly JWT signing key}
       McpAccess__Issuer: ${CF_ACCESS_ISSUER:-}
       McpAccess__Audience: ${CF_ACCESS_MCP_AUD:-}

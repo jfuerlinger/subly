@@ -38,7 +38,7 @@ public static class DependencyInjection
         return services;
     }
 
-    public static async Task EnsureDatabaseInitializedAsync(this IServiceProvider services, bool seed = false, CancellationToken cancellationToken = default)
+    public static async Task EnsureDatabaseInitializedAsync(this IServiceProvider services, bool seed = false, CancellationToken cancellationToken = default, bool demoData = true)
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SublyDbContext>();
@@ -49,9 +49,13 @@ public static class DependencyInjection
         else
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
-        if (seed)
+        if (seed && demoData)
         {
             await SublyDataSeeder.SeedAsync(dbContext, passwordHasher, cancellationToken);
+        }
+        else if (seed)
+        {
+            await SublyDataSeeder.SeedCategoriesAsync(dbContext, cancellationToken);
         }
     }
 

@@ -16,10 +16,28 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
+    [Theory]
+    [InlineData("GET", "/api/categories")]
+    [InlineData("POST", "/api/categories")]
+    [InlineData("PATCH", "/api/categories/00000000-0000-0000-0000-000000000001/name")]
+    [InlineData("DELETE", "/api/categories/00000000-0000-0000-0000-000000000001")]
+    public async Task Categories_ShouldReturnUnauthorized_WhenNoTokenIsProvided(string method, string path)
+    {
+        var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(new HttpMethod(method), path)
+        {
+            Content = method is "POST" or "PATCH" ? JsonContent.Create(new { name = "anonymous" }) : null,
+        };
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     [Fact]
     public async Task GetCategories_ShouldReturnSeededCategories()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
 
         var result = await client.GetFromJsonAsync<IReadOnlyList<CategoryDto>>("/api/categories", JsonOptions);
 
@@ -31,7 +49,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task CreateCategory_ShouldCreateAndReturnNewCategory()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var request = new CreateCategoryRequest("gaming");
 
         var response = await client.PostAsJsonAsync("/api/categories", request);
@@ -45,7 +63,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task CreateCategory_ShouldReturnBadRequest_WhenCategoryAlreadyExists()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var request = new CreateCategoryRequest("streaming");
 
         var response = await client.PostAsJsonAsync("/api/categories", request);
@@ -56,7 +74,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task RenameCategory_ShouldRenameAndReturnUpdatedCategory()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
 
         // First create a category to rename
         var created = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest("renameme"));
@@ -75,7 +93,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task RenameCategory_ShouldReturnNotFound_WhenCategoryDoesNotExist()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var nonExistentId = Guid.NewGuid();
 
         var response = await client.PatchAsJsonAsync($"/api/categories/{nonExistentId}/name", new { name = "anything" });
@@ -86,7 +104,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task DeleteCategory_ShouldDeleteUnusedCategory()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var created = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"unused-{Guid.NewGuid():N}"));
         var category = await created.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
 
@@ -101,7 +119,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task DeleteCategory_ShouldReassignSubscriptionsToReplacementCategory()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var sourceResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"source-{Guid.NewGuid():N}"));
         var targetResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"target-{Guid.NewGuid():N}"));
         var source = await sourceResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
@@ -135,7 +153,7 @@ public sealed class CategoryEndpointsTests(CustomWebApplicationFactory factory) 
     [Fact]
     public async Task DeleteCategory_ShouldRequireReplacement_WhenCategoryHasSubscriptions()
     {
-        var client = factory.CreateClient();
+        var client = await CreateAuthenticatedClientAsync($"admin-{Guid.NewGuid():N}@example.com");
         var sourceResponse = await client.PostAsJsonAsync("/api/categories", new CreateCategoryRequest($"source-{Guid.NewGuid():N}"));
         var source = await sourceResponse.Content.ReadFromJsonAsync<CategoryDto>(JsonOptions);
         var authenticatedClient = await CreateAuthenticatedClientAsync($"category-{Guid.NewGuid():N}@example.com");
